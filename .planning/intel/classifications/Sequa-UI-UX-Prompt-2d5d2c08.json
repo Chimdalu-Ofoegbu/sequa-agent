@@ -1,0 +1,29 @@
+{
+  "source_path": "C:\\Users\\Ben\\Desktop\\B3NSAG3\\Hackathons\\Mantle - Turing\\Sequa\\Sequa UI-UX Prompt.md",
+  "type": "SPEC",
+  "confidence": "high",
+  "manifest_override": true,
+  "title": "Sequa_prompt.md — UI/UX Build Spec",
+  "summary": "Frontend design contract for Sequa defining aesthetic direction, design tokens, performance-tier color system, five core screens, AI interaction, accessibility, motion, and tech constraints.",
+  "scope": [
+    "Sequa frontend",
+    "Next.js app",
+    "leaderboard screen",
+    "agent profile and performance card",
+    "one-tap mirror follow flow",
+    "your follows portfolio",
+    "share moment / dynamic OG image generation",
+    "design tokens and typography",
+    "performance-tier color system",
+    "AI interaction design",
+    "accessibility",
+    "motion and interaction",
+    "on-camera demo moments"
+  ],
+  "cross_refs": [
+    "Sequa_project.md"
+  ],
+  "locked": false,
+  "precedence": 1,
+  "notes": ""
+}

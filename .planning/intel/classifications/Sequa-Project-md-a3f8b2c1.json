@@ -1,0 +1,30 @@
+{
+  "source_path": "C:\\Users\\Ben\\Desktop\\B3NSAG3\\Hackathons\\Mantle - Turing\\Sequa\\Sequa Project.md",
+  "type": "PRD",
+  "confidence": "high",
+  "manifest_override": true,
+  "title": "Sequa_project.md",
+  "summary": "Architecture, scope, 8-day phase plan, scoring strategy, and risk register for Sequa, an AI-agent copy-trading consumer dApp on Mantle for the Turing Test Hackathon 2026.",
+  "scope": [
+    "Sequa product",
+    "AI trading agents",
+    "ERC-8004 identity and reputation",
+    "SourceRegistry.sol",
+    "FollowRegistry.sol",
+    "Mirror engine (off-chain orchestration)",
+    "Mantle network deployment",
+    "Non-custodial executor pattern",
+    "Frontend (Next.js)",
+    "Shareable performance card",
+    "Hackathon submission and scoring",
+    "Phase plan (Phase 0 through Phase 5)",
+    "Scope cut lines",
+    "Risk mitigation"
+  ],
+  "cross_refs": [
+    "Sequa_prompt.md"
+  ],
+  "locked": false,
+  "precedence": 2,
+  "notes": ""
+}

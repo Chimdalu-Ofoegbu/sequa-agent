@@ -1,0 +1,28 @@
+{
+  "source_path": "C:\\Users\\Ben\\Desktop\\B3NSAG3\\Hackathons\\Mantle - Turing\\Sequa\\PHASE-0-RESEARCH.md",
+  "type": "ADR",
+  "confidence": "high",
+  "manifest_override": true,
+  "title": "Sequa — Phase 0 Locked Decisions",
+  "summary": "Locked Phase 0 architectural decisions for Sequa: FusionX V3 as DEX venue, 3 USDC-quoted pairs, scoped ERC-20 allowance executor, and canonical Mantle ERC-8004 deployments.",
+  "scope": [
+    "FusionX V3 DEX",
+    "WMNT/USDC trading pair",
+    "mETH/USDC trading pair",
+    "WETH/USDC trading pair",
+    "SequaExecutor.sol non-custodial executor",
+    "ERC-20 scoped allowance pattern",
+    "ERC-8004 IdentityRegistry",
+    "ERC-8004 ReputationRegistry",
+    "Mantle mainnet and Sepolia testnet deployments",
+    "SourceRegistry",
+    "FollowRegistry"
+  ],
+  "cross_refs": [
+    "Sequa Project.md",
+    "Sequa UI-UX Prompt.md"
+  ],
+  "locked": true,
+  "precedence": 0,
+  "notes": ""
+}
