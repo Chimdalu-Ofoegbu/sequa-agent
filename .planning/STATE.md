@@ -1,3 +1,17 @@
+---
+gsd_state_version: 1.0
+milestone: v1.0
+milestone_name: milestone
+status: unknown
+last_updated: "2026-06-07T13:20:50.031Z"
+progress:
+  total_phases: 6
+  completed_phases: 0
+  total_plans: 5
+  completed_plans: 0
+  percent: 0
+---
+
 # STATE: Sequa
 
 ## Project Reference
@@ -12,6 +26,9 @@
 - **Current focus**: Phase 0 — ready to plan.
 
 ## Current Position
+
+Phase: 00 (lock) — EXECUTING
+Plan: 1 of 5
 
 - **Phase**: 0 — Lock
 - **Plans**: 5 plans across 4 waves (00-01 → 00-02/03 → 00-04 → 00-05)
