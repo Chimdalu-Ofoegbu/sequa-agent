@@ -49,7 +49,7 @@
 - Sepolia deployment manifest (addresses + tx hashes) committed to repo
 **Contingency annotations**: None — this phase IS the contingency floor for every other phase. If anything else slips, Phase 0 still guarantees the deployment award.
 **Plans**: 5 plans
-- [ ] 00-01-PLAN.md — Foundry scaffold + IIdentity/IReputation/ITradeExecutor interfaces + SequaConstants address pins (Wave 1)
+- [x] 00-01-PLAN.md — Foundry scaffold + IIdentity/IReputation/ITradeExecutor interfaces + SequaConstants address pins (Wave 1)
 - [ ] 00-02-PLAN.md — SourceRegistry.sol skeleton + Forge test suite (Wave 2)
 - [ ] 00-03-PLAN.md — FollowRegistry.sol skeleton + Forge test suite (Wave 2)
 - [ ] 00-04-PLAN.md — Deploy + verify both contracts on Mantle Sepolia (Wave 3, checkpointed)
