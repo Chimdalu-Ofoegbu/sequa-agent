@@ -48,7 +48,12 @@
 - `contracts/FollowRegistry.sol` (skeleton, verified on Mantle Sepolia)
 - Sepolia deployment manifest (addresses + tx hashes) committed to repo
 **Contingency annotations**: None — this phase IS the contingency floor for every other phase. If anything else slips, Phase 0 still guarantees the deployment award.
-**Plans**: TBD
+**Plans**: 5 plans
+- [ ] 00-01-PLAN.md — Foundry scaffold + IIdentity/IReputation/ITradeExecutor interfaces + SequaConstants address pins (Wave 1)
+- [ ] 00-02-PLAN.md — SourceRegistry.sol skeleton + Forge test suite (Wave 2)
+- [ ] 00-03-PLAN.md — FollowRegistry.sol skeleton + Forge test suite (Wave 2)
+- [ ] 00-04-PLAN.md — Deploy + verify both contracts on Mantle Sepolia (Wave 3, checkpointed)
+- [ ] 00-05-PLAN.md — End-to-end recordSignal -> mirror test tx + DEPLOYMENT.md manifest (Wave 4, checkpointed)
 **UI hint**: no
 
 ### Phase 1: Source + signals
@@ -172,7 +177,7 @@
 ### Phase 5: Ship
 **Goal**: A submission package that wins the deployment award and is positioned for Consumer & Viral DApps, Best UI/UX, and Community Voting.
 **Depends on**: Phases 0, 2, 4 minimum; Phases 1, 3 ideally.
-**Non-negotiable**: Yes. **Compressed to one day** (was Days 8–9 in PRD §7; revised to Day 8 only per `INGEST-CONFLICTS.md` runway-drift INFO).
+**Non-negotiable**: Yes. **Compressed to one day** (was Days 8â€“9 in PRD §7; revised to Day 8 only per `INGEST-CONFLICTS.md` runway-drift INFO).
 **Requirements**:
 - REQ-12 Deployment award bar (submission packaging)
 - REQ-13 DoraHacks submission
@@ -207,7 +212,7 @@
 
 | Phase | Plans Complete | Status | Completed |
 |---|---|---|---|
-| 0. Lock | 0/0 | Not planned | - |
+| 0. Lock | 0/5 | Planned | - |
 | 1. Source + signals | 0/0 | Not planned | - |
 | 2. Mirror execution | 0/0 | Not planned | - |
 | 3. ERC-8004 + reputation | 0/0 | Not planned | - |

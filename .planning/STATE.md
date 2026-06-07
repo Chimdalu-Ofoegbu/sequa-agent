@@ -14,15 +14,16 @@
 ## Current Position
 
 - **Phase**: 0 — Lock
-- **Plan**: None
-- **Status**: Ready to plan
+- **Plans**: 5 plans across 4 waves (00-01 → 00-02/03 → 00-04 → 00-05)
+- **Status**: Ready to execute
 - **Progress**: `[░░░░░░░░░░░░░░░░░░░░] 0/6 phases complete`
+- **Last activity**: Phase 0 planned (2026-06-07) — `/gsd-plan-phase 0` iteration 2/3 VERIFICATION PASSED.
 
 ## Phase Status Overview
 
 | Phase | Name | Status | Non-negotiable |
 |---|---|---|---|
-| 0 | Lock | Ready to plan | Yes |
+| 0 | Lock | Ready to execute (5 plans, 4 waves) | Yes |
 | 1 | Source + signals | Not planned | Yes |
 | 2 | Mirror execution | Not planned | Yes |
 | 3 | ERC-8004 + reputation | Not planned | No (first to cut) |
@@ -54,8 +55,8 @@
 
 ### Active todos
 
-- Phase 0 planning: `/gsd-plan-phase 0`.
-- Capture Sepolia deployment addresses + tx hashes from Phase 0 deploy into a deployment manifest for the DoraHacks submission packet.
+- Phase 0 execution: `/gsd-execute-phase 0` — 5 plans, 4 waves, ends with DEPLOYMENT.md packet committed.
+- Capture Sepolia deployment addresses + tx hashes from Phase 0 deploy into a deployment manifest for the DoraHacks submission packet (will be `.planning/phases/00-lock/DEPLOYMENT.md`).
 - Confirm the deployment-award fine print directly on the DoraHacks portal before submitting (DEC-006).
 
 ### Blockers
@@ -96,4 +97,4 @@ One verifiable source agent + on-chain signals + non-custodial mirror into a fol
   - `.planning/intel/constraints.md`
   - `.planning/intel/context.md`
   - `.planning/INGEST-CONFLICTS.md`
-- **Next action**: `/gsd-plan-phase 0` — plan Phase 0 (skeleton-contract deploy + verify on Mantle Sepolia + trivial `recordSignal → mirror` end-to-end transaction). Target completion: end of Day 1 to clear the 20 Project Deployment Award technical bar with maximum buffer.
+- **Next action**: `/gsd-execute-phase 0` — execute the 5 Phase 0 plans (Wave 1: scaffold + interfaces + constants; Wave 2: SourceRegistry + FollowRegistry contracts in parallel; Wave 3: deploy + verify on Mantle Sepolia; Wave 4: end-to-end `recordSignal → mirror` test tx + DEPLOYMENT.md packet). Target completion: end of Day 1 (2026-06-08) to clear the 20 Project Deployment Award technical bar with maximum buffer.
