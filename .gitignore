@@ -3,3 +3,7 @@ cache/
 broadcast/
 .env
 node_modules/
+
+# Plan 04 transient deploy/verify logs (parsed from broadcast/.../run-latest.json instead)
+deploy-phase0.log
+verify-phase0.log
