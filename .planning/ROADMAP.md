@@ -8,7 +8,7 @@
 
 ## Phases
 
-- [ ] **Phase 0: Lock** — Deploy skeleton SourceRegistry + FollowRegistry to Mantle Sepolia, verify on Mantle Explorer, wire trivial `recordSignal → mirror` AI-callable function to clear the 20 Project Deployment Award technical bar by end of Day 1.
+- [x] **Phase 0: Lock** — Deploy skeleton SourceRegistry + FollowRegistry to Mantle Sepolia, verify on Mantle Explorer, wire trivial `recordSignal → mirror` AI-callable function to clear the 20 Project Deployment Award technical bar by end of Day 1. **(Complete 2026-06-08; all 3 of 3 official Technical Deployment criteria cleared.)**
 - [ ] **Phase 1: Source + signals** — One verifiable Claude-driven source agent trading the locked FusionX V3 pair set, recording every decision on-chain; performance computed from on-chain history only.
 - [ ] **Phase 2: Mirror execution** — `SequaExecutor.sol` plus TypeScript mirror engine that scales source signals to follower capital and executes non-custodially through scoped ERC-20 allowance.
 - [ ] **Phase 3: ERC-8004 + reputation** — Mint source identities via canonical Mantle IdentityRegistry; accrue reputation through follower-driven `giveFeedback` on settled trades; resolve `clientAddresses[]` allowlist strategy.
@@ -53,7 +53,7 @@
 - [x] 00-02-PLAN.md — SourceRegistry.sol skeleton + Forge test suite (Wave 2)
 - [x] 00-03-PLAN.md — FollowRegistry.sol skeleton + Forge test suite (Wave 2)
 - [x] 00-04-PLAN.md — Deploy + verify both contracts on Mantle Sepolia (Wave 3, checkpointed)
-- [ ] 00-05-PLAN.md — End-to-end recordSignal -> mirror test tx + DEPLOYMENT.md manifest (Wave 4, checkpointed)
+- [x] 00-05-PLAN.md — End-to-end recordSignal -> mirror test tx + DEPLOYMENT.md manifest (Wave 4, checkpointed)
 **UI hint**: no
 
 ### Phase 1: Source + signals
@@ -212,8 +212,8 @@
 
 | Phase | Plans Complete | Status | Completed |
 |---|---|---|---|
-| 0. Lock | 4/5 | In Progress|  |
-| 1. Source + signals | 0/0 | Not planned | - |
+| 0. Lock | 5/5 | Complete | 2026-06-08 |
+| 1. Source + signals | 0/0 | Ready to plan | - |
 | 2. Mirror execution | 0/0 | Not planned | - |
 | 3. ERC-8004 + reputation | 0/0 | Not planned | - |
 | 4. Frontend wire-up + share card | 0/0 | Not planned | - |

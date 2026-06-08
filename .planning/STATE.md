@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: Ready to execute
-last_updated: "2026-06-08T04:10:58.907Z"
+status: Phase 0 complete — ready to plan Phase 1
+last_updated: "2026-06-08T05:55:00Z"
 progress:
   total_phases: 6
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 5
-  completed_plans: 4
-  percent: 80
+  completed_plans: 5
+  percent: 100
 ---
 
 # STATE: Sequa
@@ -23,27 +23,30 @@ progress:
 - **Prize stack targeted**: Consumer & Viral ($8.5K) + Best UI/UX ($3K) + Community Voting (2 × $8.5K) + 20 Project Deployment Award ($1K).
 - **Deadline**: 2026-06-15.
 - **Today**: 2026-06-07 (8-day runway).
-- **Current focus**: Phase 0 — ready to plan.
+- **Current focus**: Phase 0 complete (2026-06-08). Ready to plan Phase 1 — Source + signals.
 
 ## Current Position
 
-Phase: 00 (lock) — EXECUTING
-Plan: 4 of 5 (complete — wave 3 closed; next: wave 4 = 00-05 e2e test + deployment packet)
+Phase: 00 (lock) — COMPLETE (2026-06-08)
+Plan: 5 of 5 (complete — Phase 0 closed; 20 Project Deployment Award Technical Deployment bar cleared)
 
-- **Phase**: 0 — Lock
-- **Plans**: 5 plans across 4 waves (00-01 → 00-02/03 → 00-04 → 00-05)
-- **Status**: In Progress (4/5 plans complete; REQ-12 "deployed AND verified on Mantle Explorer" technical bar cleared)
-- **Progress**: `[████████░░] 80%`
-- **Last activity**: Plan 00-04 completed (2026-06-08) — SourceRegistry + FollowRegistry deployed and verified on Mantle Sepolia.
+- **Phase**: 0 — Lock — Complete
+- **Plans**: 5 plans across 4 waves (00-01 → 00-02/03 → 00-04 → 00-05) — all complete
+- **Status**: Complete (5/5 plans; 3 of 3 official Technical Deployment criteria cleared; submission packet `.planning/phases/00-lock/DEPLOYMENT.md` ready for Phase 5 paste-into-DoraHacks)
+- **Progress**: `[█░░░░░░░░░░░░░░░░░░░] 1/6 phases complete`
+- **Last activity**: Plan 00-05 completed (2026-06-08) — end-to-end `registerSource → recordSignal → mirror` tx sequence submitted live on Mantle Sepolia from independent deployer + follower EOAs; DEPLOYMENT.md packet committed.
   - SourceRegistry: `0x97a724ca8d70aee206b8d56925a735511d3cd5c8` — [verified](https://sepolia.mantlescan.xyz/address/0x97a724ca8d70aee206b8d56925a735511d3cd5c8#code)
   - FollowRegistry: `0x8d5593076161321af5433742f7514172f2786aec` — [verified](https://sepolia.mantlescan.xyz/address/0x8d5593076161321af5433742f7514172f2786aec#code)
+  - registerSource tx: [`0x0ebb8ba0...`](https://sepolia.mantlescan.xyz/tx/0x0ebb8ba06db5a30521c06adc08ba7a9cad0777fbf892ee3d32a5063c63c468c0)
+  - recordSignal tx (AI-callable on-chain function): [`0x58eda28a...`](https://sepolia.mantlescan.xyz/tx/0x58eda28ab912bbeb29d3329e546f00914919f62f4d1f9b2f56bbc9fb7eba4e1e)
+  - mirror tx (from follower `0xeC31...B615`): [`0x23bed06b...`](https://sepolia.mantlescan.xyz/tx/0x23bed06b125f90a62ed6f2072952eda239f219612627bb43a07679d927c331d2)
 
 ## Phase Status Overview
 
 | Phase | Name | Status | Non-negotiable |
 |---|---|---|---|
-| 0 | Lock | Ready to execute (5 plans, 4 waves) | Yes |
-| 1 | Source + signals | Not planned | Yes |
+| 0 | Lock | Complete (2026-06-08) — 5/5 plans, 4/4 waves | Yes |
+| 1 | Source + signals | Ready to plan | Yes |
 | 2 | Mirror execution | Not planned | Yes |
 | 3 | ERC-8004 + reputation | Not planned | No (first to cut) |
 | 4 | Frontend wire-up + share card | Not planned | Yes |
@@ -74,9 +77,9 @@ Plan: 4 of 5 (complete — wave 3 closed; next: wave 4 = 00-05 e2e test + deploy
 
 ### Active todos
 
-- Phase 0 execution: `/gsd-execute-phase 0` — 5 plans, 4 waves, ends with DEPLOYMENT.md packet committed.
-- Capture Sepolia deployment addresses + tx hashes from Phase 0 deploy into a deployment manifest for the DoraHacks submission packet (will be `.planning/phases/00-lock/DEPLOYMENT.md`).
-- Confirm the deployment-award fine print directly on the DoraHacks portal before submitting (DEC-006).
+- Phase 1 planning: `/gsd-plan-phase 1` — Source + signals (one verifiable Claude-driven source agent on the locked FusionX V3 pair set, recording every decision on-chain).
+- Carry the `.planning/phases/00-lock/DEPLOYMENT.md` paragraph forward to the DoraHacks submission packet (Phase 5).
+- Re-confirm the deployment-award fine print on the DoraHacks portal at submission time (DEC-006); current Phase 0 packet matches the 7-item fine print verbatim as of 2026-06-08.
 
 ### Blockers
 
@@ -103,17 +106,11 @@ One verifiable source agent + on-chain signals + non-custodial mirror into a fol
 
 ## Session Continuity
 
-- **Last session**: Initial planning skeleton generation (2026-06-07).
-- **Generated artifacts**:
-  - `.planning/PROJECT.md` (with 6 locked ADR decisions)
-  - `.planning/REQUIREMENTS.md` (14 v1 requirements + traceability)
-  - `.planning/ROADMAP.md` (6 phases, scope cuts pre-encoded)
-  - `.planning/STATE.md` (this file)
-- **Inputs preserved**:
-  - `.planning/intel/SYNTHESIS.md`
-  - `.planning/intel/decisions.md`
-  - `.planning/intel/requirements.md`
-  - `.planning/intel/constraints.md`
-  - `.planning/intel/context.md`
-  - `.planning/INGEST-CONFLICTS.md`
-- **Next action**: `/gsd-execute-phase 0` — execute the 5 Phase 0 plans (Wave 1: scaffold + interfaces + constants; Wave 2: SourceRegistry + FollowRegistry contracts in parallel; Wave 3: deploy + verify on Mantle Sepolia; Wave 4: end-to-end `recordSignal → mirror` test tx + DEPLOYMENT.md packet). Target completion: end of Day 1 (2026-06-08) to clear the 20 Project Deployment Award technical bar with maximum buffer.
+- **Last session**: Phase 0 closed (2026-06-08) — Plan 00-05 e2e test sequence + DEPLOYMENT.md packet shipped.
+- **Stopped at**: Phase 0 success criteria all met; `.planning/phases/00-lock/00-05-SUMMARY.md` and `.planning/phases/00-lock/DEPLOYMENT.md` committed.
+- **Generated artifacts** (Phase 0):
+  - `script/DeployPhase0.s.sol`, `script/VerifyPhase0.sh`
+  - `src/SourceRegistry.sol`, `src/FollowRegistry.sol`, `src/interfaces/*` (skeleton contract suite)
+  - `deployments/sepolia.json` (testTransaction block populated)
+  - `.planning/phases/00-lock/DEPLOYMENT.md` (DoraHacks-ready submission paragraph)
+- **Next action**: `/gsd-plan-phase 1` — Source + signals. Live Claude-driven source agent on the locked FusionX V3 pair set; on-chain signal stream via `SourceRegistry.recordSignal`; performance computed from on-chain history only. 7 days of buffer remaining to the 2026-06-15 deadline; Phase 0 Technical Deployment bar is cleared so the deployment-award race condition is locked in early.
