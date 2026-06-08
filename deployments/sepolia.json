@@ -19,5 +19,34 @@
       "verified": true
     }
   },
-  "testTransaction": null
+  "testTransaction": {
+    "narrative": "End-to-end AI-callable on-chain function path: deployer registered source agentId 1, recorded a trade signal (ABI-encoded ExactInputSingleParams payload), then an independent follower EOA mirrored the source via FollowRegistry. All three state-changing txs are publicly visible on Mantle Explorer. The executor field on the mirror tx is the deployer EOA used as a documented sentinel placeholder — the live SequaExecutor.sol lands in Phase 2.",
+    "submittedAt": "2026-06-08T05:55:00Z",
+    "agentId": 1,
+    "sourceOwner": "0x0C837aDA52E8Dd4b16Ae39D864FD5eEB82B80b21",
+    "follower": "0xeC31eFDd7F62b418cA4938D22b32C3930C35B615",
+    "executorPlaceholder": "0x0C837aDA52E8Dd4b16Ae39D864FD5eEB82B80b21",
+    "executorPlaceholderRationale": "Deployer EOA passed as placeholder because FollowRegistry.mirror() rejects address(0) with ZeroExecutor. Real SequaExecutor lands in Phase 2 (DEC-003 scoped-allowance pattern).",
+    "registerSourceTx": "0x0ebb8ba06db5a30521c06adc08ba7a9cad0777fbf892ee3d32a5063c63c468c0",
+    "recordSignalTx": "0x58eda28ab912bbeb29d3329e546f00914919f62f4d1f9b2f56bbc9fb7eba4e1e",
+    "mirrorTx": "0x23bed06b125f90a62ed6f2072952eda239f219612627bb43a07679d927c331d2",
+    "registerSourceExplorer": "https://sepolia.mantlescan.xyz/tx/0x0ebb8ba06db5a30521c06adc08ba7a9cad0777fbf892ee3d32a5063c63c468c0",
+    "recordSignalExplorer": "https://sepolia.mantlescan.xyz/tx/0x58eda28ab912bbeb29d3329e546f00914919f62f4d1f9b2f56bbc9fb7eba4e1e",
+    "mirrorExplorer": "https://sepolia.mantlescan.xyz/tx/0x23bed06b125f90a62ed6f2072952eda239f219612627bb43a07679d927c331d2",
+    "signalPayload": {
+      "encoding": "ABI: (address tokenIn, address tokenOut, uint256 amountIn, uint256 minAmountOut, uint24 fee)",
+      "tokenIn": "0x000000000000000000000000000000000000DEAD",
+      "tokenOut": "0x000000000000000000000000000000000000BEEF",
+      "amountIn": "1000000000000000000",
+      "minAmountOut": "900000000000000000",
+      "fee": 3000,
+      "note": "Placeholder addresses — D-07 treats signal bytes as opaque in Phase 0. Phase 1 wires real WMNT/USDC tokens."
+    },
+    "gas": {
+      "registerSourceGasUsed": 96941,
+      "recordSignalGasUsed": 58639,
+      "mirrorGasUsed": 188009,
+      "totalGasUsed": 343589
+    }
+  }
 }
