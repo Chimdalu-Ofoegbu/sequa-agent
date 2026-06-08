@@ -192,8 +192,8 @@ Phase mappings derived in `.planning/ROADMAP.md`. Every v1 requirement maps to e
 
 | Requirement | ID | Phase | Status |
 |---|---|---|---|
-| REQ-01 SourceRegistry | REQ-source-registry | Phase 0 (skeleton) → Phase 1 (signal path) | Pending |
-| REQ-02 FollowRegistry | REQ-follow-registry | Phase 0 (skeleton) → Phase 2 (mirror trigger) | Pending |
+| REQ-01 SourceRegistry | REQ-source-registry | Phase 0 (skeleton) → Phase 1 (signal path) | Complete |
+| REQ-02 FollowRegistry | REQ-follow-registry | Phase 0 (skeleton) → Phase 2 (mirror trigger) | Complete |
 | REQ-03 Non-custodial execution | REQ-non-custodial-execution | Phase 2 | Pending |
 | REQ-04 ERC-8004 reputation | REQ-erc8004-identity-reputation | Phase 3 | Pending |
 | REQ-05 Mirror engine | REQ-mirror-engine | Phase 2 | Pending |
@@ -203,7 +203,7 @@ Phase mappings derived in `.planning/ROADMAP.md`. Every v1 requirement maps to e
 | REQ-09 One-tap mirror flow | REQ-one-tap-mirror-flow | Phase 4 | Pending |
 | REQ-10 Your follows | REQ-your-follows | Phase 4 | Pending |
 | REQ-11 Share moment | REQ-share-moment | Phase 4 | Pending |
-| REQ-12 Deployment award bar | REQ-deployment-award-bar | Phase 0 (technical bar) + Phase 5 (submission) | Pending |
+| REQ-12 Deployment award bar | REQ-deployment-award-bar | Phase 0 (technical bar) + Phase 5 (submission) | Complete |
 | REQ-13 DoraHacks submission | REQ-submission | Phase 5 | Pending |
 | REQ-14 Community Voting asset | REQ-community-voting-asset | Phase 5 | Pending |
 

@@ -52,7 +52,7 @@
 - [x] 00-01-PLAN.md — Foundry scaffold + IIdentity/IReputation/ITradeExecutor interfaces + SequaConstants address pins (Wave 1)
 - [x] 00-02-PLAN.md — SourceRegistry.sol skeleton + Forge test suite (Wave 2)
 - [x] 00-03-PLAN.md — FollowRegistry.sol skeleton + Forge test suite (Wave 2)
-- [ ] 00-04-PLAN.md — Deploy + verify both contracts on Mantle Sepolia (Wave 3, checkpointed)
+- [x] 00-04-PLAN.md — Deploy + verify both contracts on Mantle Sepolia (Wave 3, checkpointed)
 - [ ] 00-05-PLAN.md — End-to-end recordSignal -> mirror test tx + DEPLOYMENT.md manifest (Wave 4, checkpointed)
 **UI hint**: no
 
@@ -212,7 +212,7 @@
 
 | Phase | Plans Complete | Status | Completed |
 |---|---|---|---|
-| 0. Lock | 0/5 | Planned | - |
+| 0. Lock | 4/5 | In Progress|  |
 | 1. Source + signals | 0/0 | Not planned | - |
 | 2. Mirror execution | 0/0 | Not planned | - |
 | 3. ERC-8004 + reputation | 0/0 | Not planned | - |

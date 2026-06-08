@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: unknown
-last_updated: "2026-06-07T13:20:50.031Z"
+status: Ready to execute
+last_updated: "2026-06-08T04:10:58.907Z"
 progress:
   total_phases: 6
   completed_phases: 0
   total_plans: 5
-  completed_plans: 0
-  percent: 0
+  completed_plans: 4
+  percent: 80
 ---
 
 # STATE: Sequa
@@ -28,13 +28,15 @@ progress:
 ## Current Position
 
 Phase: 00 (lock) — EXECUTING
-Plan: 1 of 5
+Plan: 4 of 5 (complete — wave 3 closed; next: wave 4 = 00-05 e2e test + deployment packet)
 
 - **Phase**: 0 — Lock
 - **Plans**: 5 plans across 4 waves (00-01 → 00-02/03 → 00-04 → 00-05)
-- **Status**: Ready to execute
-- **Progress**: `[░░░░░░░░░░░░░░░░░░░░] 0/6 phases complete`
-- **Last activity**: Phase 0 planned (2026-06-07) — `/gsd-plan-phase 0` iteration 2/3 VERIFICATION PASSED.
+- **Status**: In Progress (4/5 plans complete; REQ-12 "deployed AND verified on Mantle Explorer" technical bar cleared)
+- **Progress**: `[████████░░] 80%`
+- **Last activity**: Plan 00-04 completed (2026-06-08) — SourceRegistry + FollowRegistry deployed and verified on Mantle Sepolia.
+  - SourceRegistry: `0x97a724ca8d70aee206b8d56925a735511d3cd5c8` — [verified](https://sepolia.mantlescan.xyz/address/0x97a724ca8d70aee206b8d56925a735511d3cd5c8#code)
+  - FollowRegistry: `0x8d5593076161321af5433742f7514172f2786aec` — [verified](https://sepolia.mantlescan.xyz/address/0x8d5593076161321af5433742f7514172f2786aec#code)
 
 ## Phase Status Overview
 
