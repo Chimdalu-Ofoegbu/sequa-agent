@@ -19,10 +19,12 @@ if [ "${SOURCE_ADDR}" = "null" ] || [ "${FOLLOW_ADDR}" = "null" ]; then
   exit 1
 fi
 
-# NOTE: The deprecated V1 endpoint (https://api-sepolia.mantlescan.xyz/api) was decommissioned —
-# returns "deprecated V1 endpoint, switch to Etherscan API V2". Use the unified Etherscan V2
-# endpoint with `?chainid=5003` query param. Foundry 1.5.1's etherscan verifier does NOT yet pass
-# the chainid for V2, so embedding it in the URL is the working pattern.
+# Mantle Explorer uses the Etherscan V2 unified API. The legacy V1 endpoint
+# (https://api-sepolia.mantlescan.xyz/api) was decommissioned. Foundry 1.5.1's
+# etherscan verifier does NOT yet pass `chainid` as a separate parameter for V2,
+# so the chain id is embedded directly in the URL as a query string. This value
+# matches foundry.toml's [etherscan] block; --verifier-url here is kept as an
+# explicit override so this script works even if foundry.toml is misconfigured.
 VERIFIER_URL="https://api.etherscan.io/v2/api?chainid=5003"
 
 echo "Verifying SourceRegistry at ${SOURCE_ADDR}..."

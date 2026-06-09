@@ -11,5 +11,10 @@ evm_version = "paris"
 [rpc_endpoints]
 mantle_sepolia = "https://rpc.sepolia.mantle.xyz"
 
+# Mantle Explorer uses the Etherscan V2 unified API. The legacy V1 endpoint
+# (https://api-sepolia.mantlescan.xyz/api) was decommissioned — it now returns
+# "deprecated V1 endpoint, switch to Etherscan API V2". Foundry 1.5.1's etherscan
+# verifier does NOT yet pass `chainid` as a separate parameter for V2, so the
+# chain id is embedded directly in the URL as a query string.
 [etherscan]
-mantle_sepolia = { key = "${MANTLESCAN_API_KEY}", url = "https://api-sepolia.mantlescan.xyz/api", chain = 5003 }
+mantle_sepolia = { key = "${MANTLESCAN_API_KEY}", url = "https://api.etherscan.io/v2/api?chainid=5003", chain = 5003 }
