@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: Ready to execute
-last_updated: "2026-06-10T19:56:27Z"
+last_updated: "2026-06-10T20:41:11.284Z"
 progress:
   total_phases: 6
   completed_phases: 1
   total_plans: 11
-  completed_plans: 6
-  percent: 55
+  completed_plans: 7
+  percent: 64
 ---
 
 # STATE: Sequa
@@ -28,9 +28,9 @@ progress:
 ## Current Position
 
 Phase: 1
-Plan: 02 complete (Wave 1) — extended SourceRegistry source + tests + redeploy script
+Plan: 03 complete (Wave 1) — greenfield agent/ workspace: pure MA-crossover core + Claude narration + eval harness
 
-- **Phase 1 — Source + signals — In progress** (1/6 plans): Plan 01-02 complete (SourceRegistry extension). Wave 1 plan 01-01 runs in parallel (file-disjoint).
+- **Phase 1 — Source + signals — In progress** (Plans 01-02 + 01-03 complete): 01-02 extended SourceRegistry; 01-03 built the `agent/` TypeScript cores (pure deterministic strategy + off-hot-path narration + offline eval gate), file-disjoint from 01-01/01-02 in Wave 1. Plan 05 wires the cores into the poll loop.
 - **Phase**: 0 — Lock — Complete
 - **Plans**: 5 plans across 4 waves (00-01 → 00-02/03 → 00-04 → 00-05) — all complete
 - **Status**: Complete (5/5 plans; 3 of 3 official Technical Deployment criteria cleared; submission packet `.planning/phases/00-lock/DEPLOYMENT.md` ready for Phase 5 paste-into-DoraHacks)
@@ -65,6 +65,7 @@ Plan: 02 complete (Wave 1) — extended SourceRegistry source + tests + redeploy
 | Phase | Plan | Duration | Tasks | Files | Completed |
 |---|---|---|---|---|---|
 | 1 | 02 | ~22 min | 2 | 3 | 2026-06-10 |
+| 1 | 03 | 33 min | 3 | 29 | 2026-06-10 |
 
 ## Accumulated Context
 
@@ -76,6 +77,14 @@ Plan: 02 complete (Wave 1) — extended SourceRegistry source + tests + redeploy
 - DEC-004 — Use canonical Mantle ERC-8004 deployments. Skip ValidationRegistry. Self-feedback is impossible by construction. `clientAddresses[]` allowlist strategy must be resolved in Phase 3 planning.
 - DEC-005 — Minimum ERC-8004 interface surface only: IdentityRegistry `register`/`getAgentWallet`/`ownerOf` + ReputationRegistry `giveFeedback`/`getSummary`.
 - DEC-006 — Prize stack targeted: Consumer & Viral + Best UI/UX + Community Voting + 20 Project Deployment Award. Judging panel and key dates locked.
+
+### Phase 1 execution decisions (Plan 01-03)
+
+- `agent/` strategy core (`src/strategy/maCrossover.ts`) is PURE — only the types import, no network/fs/clock; identical inputs → identical `Signal[]` (mirror-fidelity premise, D-01). Exports `decideSignals` + `decideSignalsDetailed` + `DEFAULT_STRATEGY_CONFIG`.
+- BUY sizing = 0.30 of available USDC (D-07 band); SELL flat-sells the holding. `minUsdc` floor = 100 for the D-13 skip. Crossover detected on the final tick vs the prior tick.
+- `narrateSignalSafe` (the ONLY runtime entry) never throws/blocks — validate → one retry → deterministic fidelity-correct `fallbackThesis`. Locked params: `claude-haiku-4-5`, max_tokens 120, temperature 0.7; client timeout 8000, maxRetries 2.
+- `eval:unit` (vitest over labeled fixtures + signalFidelity/bannedPhrases/thesisSchema) is the always-on offline CI gate — no `ANTHROPIC_API_KEY`. `eval:prompt`/`eval:ci` add the live promptfoo regression.
+- REQ-06 remains Pending: Plan 01-03 built the off-chain cores; REQ-06's on-chain acceptance (real recorded signals, reconciler 100%) completes in Plan 05/06.
 
 ### Pre-existing assets (factor into planning)
 
@@ -113,8 +122,8 @@ One verifiable source agent + on-chain signals + non-custodial mirror into a fol
 
 ## Session Continuity
 
-- **Last session**: Executed Plan 01-02 (2026-06-10) — extended SourceRegistry with `invalidateSignal` (D-30), `signalAt` (D-33), typed `SignalDecoded` event (additive), persisted signal bytes; added 6 tests (12 total green) + `script/DeploySourceRegistryV1.s.sol` redeploy script (compiles, NOT broadcast). `SignalRecorded` topic0 preserved byte-for-byte. Commits `119bba8` (feat), `7f95872` (test), `0bd2dd1` (docs). No on-chain broadcast — live redeploy deferred to Plan 06.
-- **Stopped at**: Plan 01-02 complete + committed; `01-02-SUMMARY.md` written. Wave 1 plan 01-01 may run in parallel (file-disjoint).
+- **Last session**: Executed Plan 01-03 (2026-06-10) — stood up the greenfield `agent/` TypeScript workspace: pure replay-deterministic MA-crossover core (`decideSignals`, D-02/D-03/D-05/D-13..D-16), off-hot-path Claude narration (`narrateSignalSafe` never throws/blocks — validate→retry→fallback; locked `claude-haiku-4-5`/120/0.7, client timeout 8000/maxRetries 2), and an eval harness (12 labeled fixtures + signalFidelity + bannedPhrases + thesisSchema + promptfooconfig; `eval:unit` is the always-on offline gate). 66 tests green, no live API call. TDD commits — Task 1: `369adee` (test RED) → `124220c` (feat GREEN); Task 2: `1be7ad9` (test RED) → `27f033d` (feat GREEN); Task 3: `6f9fba4` (feat). 4 auto-fixed deviations (test fixtures + mock hoist + fidelity idiom + promptfoo config), all documented in `01-03-SUMMARY.md`.
+- **Stopped at**: Plan 01-03 complete + committed; `01-03-SUMMARY.md` written + self-check PASSED. The strategy + narration + guardrail interfaces are exported for Plan 05 to wire into the poll loop (`recordSignal → swap` + fire-and-store narration + `/healthz`).
 - **Key Phase 1 decisions locked** (see `01-CONTEXT.md` for all 42):
   - Deterministic momentum/breakout rule (short 5 / long 20 MA @ 30s poll, 3–5 min cooldown) + Claude per-signal thesis; single confident-momentum-trader persona.
   - All 3 locked pairs; fixed-fraction USDC sizing; ~20 signals/day soft cap.

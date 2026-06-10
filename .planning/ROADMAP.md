@@ -81,8 +81,8 @@
 - **Scope cut line #5**: if Phase 1 falls behind, the trading pair set can be reduced to a single pair. This overrides part of DEC-002 and MUST be documented explicitly in `.planning/` if invoked.
 **Plans**: 6 plans across 4 waves
 - [ ] 01-01-PLAN.md — Self-deploy UniV3 fork + 4 mock ERC-20s + seed 3 full-range pools; write back venue/token/pool addresses (Wave 1, D-43)
-- [ ] 01-02-PLAN.md — Extend + redeploy SourceRegistry (invalidateSignal, signalAt, typed SignalDecoded) + tests (Wave 1)
-- [ ] 01-03-PLAN.md — Greenfield agent/ workspace: pure MA-crossover core + replay tests + Claude narration + eval harness (Wave 1)
+- [x] 01-02-PLAN.md — Extend + redeploy SourceRegistry (invalidateSignal, signalAt, typed SignalDecoded) + tests (Wave 1)
+- [x] 01-03-PLAN.md — Greenfield agent/ workspace: pure MA-crossover core + replay tests + Claude narration + eval harness (Wave 1)
 - [ ] 01-04-PLAN.md — Chain layer: ERC-8004 mint + registerSource + recordSignal→swap hot path + QuoterV2 quote + shared tuple codec (Wave 2)
 - [ ] 01-05-PLAN.md — Runtime: 30s poll loop + thesis store + /healthz + reconciler CLI (D-40 gate) + ambient noise bot (Wave 3)
 - [ ] 01-06-PLAN.md — Go live: redeploy/verify + mint identity + first live signal + host always-on + reconciler acceptance gate + RUN.md (Wave 4)
