@@ -24,7 +24,9 @@ contract PoolInitCodeHashTest is Test {
         0x3c168cc5d3311f0933f08b32142d0998baeecd13571089b4bb0cdeeaf401d70b;
 
     function test_PoolInitCodeHash_MatchesLiveBuild() public {
-        bytes memory poolCreationCode = vm.getCode("UniswapV3Pool.sol:UniswapV3Pool");
+        // Explicit artifact JSON path so vm.getCode reads the 0.7.6 pool bytecode from disk
+        // regardless of the test run's 0.8 compile set (PRE-REQ: `forge build`). See §e.
+        bytes memory poolCreationCode = vm.getCode("out/UniswapV3Pool.sol/UniswapV3Pool.json");
         bytes32 liveHash = keccak256(poolCreationCode);
         emit log_named_bytes32("live UniswapV3Pool init code hash", liveHash);
         emit log_named_bytes32("patched POOL_INIT_CODE_HASH        ", PATCHED_POOL_INIT_CODE_HASH);

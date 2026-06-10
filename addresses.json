@@ -1,0 +1,35 @@
+{
+  "chainId": 5003,
+  "network": "mantle-sepolia",
+  "venue": {
+    "factory": "0xee00d96ACE169B356E64A5dFE4ad732bE11eca93",
+    "swapRouter": "0x3b8eA15B067eC1ff9255AbdF519e3F91bEb7c1E0",
+    "quoterV2": "0x9CaC7a2a1fa687C11b5CFaEE0f967232257e87cf",
+    "nonfungiblePositionManager": "0xd825FA1f548dD37C49F63511E7162e8ffd5071b2"
+  },
+  "tokens": {
+    "usdc": "0xAa606f127F0b40C2ab1ba47498d23C4C769C680E",
+    "wmnt": "0x55dAF03C1690a8E13cB1348d9693Cd25E89F74da",
+    "meth": "0xEDD7219bD5DBF25B44B891ccf25a26550277Bd3B",
+    "weth": "0xc4a88aca804F11BFAA35BfB6CA4aA4db473688C4"
+  },
+  "pools": {
+    "wmntUsdc": "0xD622570De1975B748742433FD2d7612F49FdD4DE",
+    "methUsdc": "0xC57320318F2c2C3B99EEd5DCA789421963378481",
+    "wethUsdc": "0xAaEeA6b4c6B084d3Bb07dd91a457476B8081235C"
+  },
+  "fee": 3000,
+  "decimals": {
+    "usdc": 6,
+    "wmnt": 18,
+    "meth": 18,
+    "weth": 18
+  },
+  "venueNote": "Self-deployed canonical Uniswap V3 fork (D-43). FusionX V3 is NOT on chain 5003. fee=3000 / tickSpacing 60. Deployed by script/DeployPhase1.s.sol.",
+  "seedPrices": {
+    "wmntUsdc": 0.6,
+    "methUsdc": 3200,
+    "wethUsdc": 3200,
+    "note": "D-20 mainnet-like reference prices (USDC per token). WMNT pool ~5k USDC depth; mETH/WETH pools ~25k USDC depth (deviation from D-19's literal 5k so a $3200 asset has realistic single-token depth)."
+  }
+}
