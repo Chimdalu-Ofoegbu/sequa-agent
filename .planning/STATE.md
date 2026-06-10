@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: Ready to execute
-last_updated: "2026-06-10T15:21:27.023Z"
+last_updated: "2026-06-10T19:56:27Z"
 progress:
   total_phases: 6
   completed_phases: 1
   total_plans: 11
-  completed_plans: 5
-  percent: 45
+  completed_plans: 6
+  percent: 55
 ---
 
 # STATE: Sequa
@@ -28,8 +28,9 @@ progress:
 ## Current Position
 
 Phase: 1
-Plan: Not started
+Plan: 02 complete (Wave 1) — extended SourceRegistry source + tests + redeploy script
 
+- **Phase 1 — Source + signals — In progress** (1/6 plans): Plan 01-02 complete (SourceRegistry extension). Wave 1 plan 01-01 runs in parallel (file-disjoint).
 - **Phase**: 0 — Lock — Complete
 - **Plans**: 5 plans across 4 waves (00-01 → 00-02/03 → 00-04 → 00-05) — all complete
 - **Status**: Complete (5/5 plans; 3 of 3 official Technical Deployment criteria cleared; submission packet `.planning/phases/00-lock/DEPLOYMENT.md` ready for Phase 5 paste-into-DoraHacks)
@@ -54,10 +55,16 @@ Plan: Not started
 
 ## Performance Metrics
 
-- **Requirements covered**: 14/14 mapped to phases.
+- **Requirements covered**: 14/14 mapped to phases (REQ-01 completed in Plan 01-02).
 - **ADR decisions locked**: 6/6 (DEC-001 venue, DEC-002 pair set, DEC-003 executor pattern, DEC-004 ERC-8004 deployments, DEC-005 ERC-8004 surface, DEC-006 prize + panel + dates).
 - **SPEC constraints active**: 13.
 - **Conflicts**: 0 blockers, 0 warnings, 5 INFO auto-resolved.
+
+### Plan execution metrics
+
+| Phase | Plan | Duration | Tasks | Files | Completed |
+|---|---|---|---|---|---|
+| 1 | 02 | ~22 min | 2 | 3 | 2026-06-10 |
 
 ## Accumulated Context
 
@@ -106,8 +113,8 @@ One verifiable source agent + on-chain signals + non-custodial mirror into a fol
 
 ## Session Continuity
 
-- **Last session**: Phase 1 context gathered (2026-06-10) — `/gsd-discuss-phase 1` complete. 12 gray areas discussed → 42 decisions in `.planning/phases/01-source-signals/01-CONTEXT.md`; audit trail in `01-DISCUSSION-LOG.md`. Both committed (`docs(01): capture phase context`).
-- **Stopped at**: Phase 1 CONTEXT.md written + committed; ready for `/gsd-plan-phase 1`.
+- **Last session**: Executed Plan 01-02 (2026-06-10) — extended SourceRegistry with `invalidateSignal` (D-30), `signalAt` (D-33), typed `SignalDecoded` event (additive), persisted signal bytes; added 6 tests (12 total green) + `script/DeploySourceRegistryV1.s.sol` redeploy script (compiles, NOT broadcast). `SignalRecorded` topic0 preserved byte-for-byte. Commits `119bba8` (feat), `7f95872` (test), `0bd2dd1` (docs). No on-chain broadcast — live redeploy deferred to Plan 06.
+- **Stopped at**: Plan 01-02 complete + committed; `01-02-SUMMARY.md` written. Wave 1 plan 01-01 may run in parallel (file-disjoint).
 - **Key Phase 1 decisions locked** (see `01-CONTEXT.md` for all 42):
   - Deterministic momentum/breakout rule (short 5 / long 20 MA @ 30s poll, 3–5 min cooldown) + Claude per-signal thesis; single confident-momentum-trader persona.
   - All 3 locked pairs; fixed-fraction USDC sizing; ~20 signals/day soft cap.

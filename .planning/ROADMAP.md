@@ -219,7 +219,7 @@
 | Phase | Plans Complete | Status | Completed |
 |---|---|---|---|
 | 0. Lock | 5/5 | Complete | 2026-06-08 |
-| 1. Source + signals | 0/6 | Planned (4 waves) | - |
+| 1. Source + signals | 1/6 | In progress (4 waves) | - |
 | 2. Mirror execution | 0/0 | Not planned | - |
 | 3. ERC-8004 + reputation | 0/0 | Not planned | - |
 | 4. Frontend wire-up + share card | 0/0 | Not planned | - |
