@@ -1,10 +1,3 @@
 {
-  "model_profile": "inherit",
-  "workflows": {
-    "discuss_phase": true,
-    "plan_phase": true,
-    "code_review": true,
-    "verify_work": true
-  },
-  "notes": "model_profile: inherit -> GSD subagents track the active session model rather than a hardcoded sonnet/opus tier."
+  "model_profile": "inherit"
 }

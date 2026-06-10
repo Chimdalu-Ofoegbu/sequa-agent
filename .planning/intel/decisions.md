@@ -4,19 +4,25 @@ Synthesized from Phase 0 LOCKED decisions. Precedence: 0 (highest). All decision
 
 ---
 
-## DEC-001 — Trading venue: FusionX V3
+## DEC-001 — Trading venue: FusionX V3 (Sepolia venue AMENDED 2026-06-10, Phase 1)
 - source: `PHASE-0-RESEARCH.md` §1
-- status: LOCKED
+- status: LOCKED (mainnet); **AMENDED for Sepolia testnet — see amendment below**
 - scope: DEX selection for source agents and mirror execution on Mantle
 - decision: Use FusionX V3 (UniV3-style concentrated liquidity AMM) as the sole DEX venue for both source agent trading and mirror execution.
 - rationale: Only Mantle DEX with both officially documented mainnet AND Sepolia testnet routers. Identical `ISwapRouter.exactInputSingle` interface to Uniswap V3 — zero adapter code for the mirror engine. Merchant Moe has more liquidity but no usable testnet and its V2.2 Liquidity Book router is non-standard.
 - contract addresses:
   - SwapRouter mainnet: `0x5989FB161568b9F133eDf5Cf6787f5597762797F`
-  - SwapRouter Sepolia: `0x8fC0B6585d73C94575555B3970D7A79c5bfc6E36`
+  - ~~SwapRouter Sepolia: `0x8fC0B6585d73C94575555B3970D7A79c5bfc6E36`~~ **DEAD — see amendment**
   - Factory mainnet: `0x530d2766D1988CC1c000C8b7d00334c14B69AD71`
-  - Factory Sepolia: `0xf811BF0B2174135Ff1c8E615eB6B678caECa8d61`
+  - ~~Factory Sepolia: `0xf811BF0B2174135Ff1c8E615eB6B678caECa8d61`~~ **DEAD — see amendment**
   - QuoterV2 mainnet: `0x90f72244294E7c5028aFd6a96E18CC2c1E913995`
-  - QuoterV2 Sepolia: `0xa4e57d8FD802cc6b1b01218dfF0046fA571241da`
+  - ~~QuoterV2 Sepolia: `0xa4e57d8FD802cc6b1b01218dfF0046fA571241da`~~ **DEAD — see amendment**
+
+### AMENDMENT (2026-06-10, Phase 1 — Sepolia venue)
+- **Finding (VERIFIED):** FusionX V3 is **not deployed on Mantle Sepolia (chain 5003)**. The three Sepolia addresses above all return `codesize 0` (confirmed via `cast codesize` on `rpc.sepolia.mantle.xyz`; controls Multicall3=3808 and ERC-8004 IdentityRegistry=130 confirm the RPC/chain are correct). The docs these addresses came from target the deprecated old Mantle Testnet (chain 5001, RPC now 404s). Phase 0's e2e test used `0xDEAD`/`0xBEEF` placeholder tokens and never called FusionX, so the gap went undetected. Additionally, FusionX **mainnet** does not enable the `fee=3000` tier (enabled: 100/500/2500/10000).
+- **Resolution (user-approved, Phase 1 plan-phase):** Self-deploy a **canonical Uniswap V3 fork** (factory + NonfungiblePositionManager + SwapRouter + QuoterV2) to Mantle Sepolia as a Wave-0 chore, alongside the 4 mock ERC-20s. The `ISwapRouter.exactInputSingle` / `IQuoterV2` surface is identical to FusionX → **zero adapter code**, mirror engine unaffected (CON-fusionx-router interface contract intact). A canonical UniV3 factory enables `fee=3000` by default (tickSpacing 60), so **D-19's 0.30% / fee=3000 is preserved**.
+- **Address handling:** the dead Sepolia addresses above MUST NOT be used. Venue addresses become a **deploy-time output** written back into `SequaConstants.sol` / `addresses.json` by the self-deploy script — not hard-coded constants copied from stale docs.
+- **Mainnet path unchanged:** the mainnet FusionX V3 addresses remain valid for any future Phase 5 mainnet move; this amendment is Sepolia-only.
 
 ---
 

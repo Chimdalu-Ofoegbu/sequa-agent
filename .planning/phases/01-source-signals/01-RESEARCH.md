@@ -507,20 +507,23 @@ return block.text.trim();
 
 ---
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **Is FusionX V3 deployed and usable on Mantle Sepolia (chain 5003) today — and at what addresses/fee tiers?**
    - What we know: every docs-pinned FusionX Sepolia address has zero code on 5003; the docs target the dead old testnet; FusionX V3 IS live on mainnet (5000) but only at fee tiers 100/500/2500/10000, not 3000. [VERIFIED via cast]
    - What's unclear: whether a *current* FusionX V3 Sepolia deployment exists at undocumented addresses (the FusionX app offers a `mantle-sepolia-testnet` option, which hints it may).
    - Recommendation: **Wave 0 spike** — check the FusionX app/Discord for live Sepolia addresses; `cast codesize` each candidate; if none, self-deploy a UniV3 fork (Pitfall 1 option 2). Decision gates all LP-seed/swap/quote work. Re-confirm `fee=3000`→actual tier with the user (it contradicts D-19).
+   - **RESOLVED (2026-06-10):** No current FusionX/UniV3 Sepolia deployment was usable, so per the **DEC-001 amendment** (Sepolia venue) + new **D-43** (user-approved) we **self-deploy a canonical Uniswap V3 fork** (factory + NPM + SwapRouter + QuoterV2) on Sepolia. Implemented by **Plan 01-01** as the Wave-1 venue gate that blocks downstream LP/swap/quote work: `cast codesize` > 0 fail-closed liveness on every pinned venue address + deploy-time write-back into SequaConstants.sol/addresses.json (never copied from stale docs). A canonical UniV3 factory enables `fee=3000`/tickSpacing 60 by default, so **D-19’s 0.30% tier is preserved unchanged**.
 2. **Exact `agentURI` JSON shape + host for the ERC-8004 mint (D-28).**
    - What we know: `tokenURI` stores/returns the raw string; D-28 says static GitHub-Pages JSON `{name, persona, strategy, startedAt, repo}`.
    - What's unclear: whether the canonical registry expects a URL vs an inline JSON string (existing agentId 1 stored an inline JSON object, not a URL — see Pattern 5 tokenURI output).
    - Recommendation: a resolvable HTTPS URL is the safest, most portable choice for the Phase 4 card; confirm the registry accepts a plain URL string (it stores whatever string you pass — verified it round-trips arbitrary strings).
+   - **RESOLVED (2026-06-10):** Use a **resolvable HTTPS GitHub-Pages URL** (the registry stores an arbitrary string; a URL is the portable choice for the Phase 4 card). Implemented by **Plan 01-06 Task 1** (publish `agentURI.json` to GitHub Pages, set `AGENT_URI`); the live HTTPS-resolve check is a precondition of the Plan 01-06 Task 2 mint, which genuinely needs the URL live.
 3. **`SignalDecoded` typed-event field set for Phase 2 (D-33).**
    - What we know: Phase 2 wants indexed fields to avoid decoding bytes per handler.
    - What's unclear: which fields Phase 2 will index on (tokenIn? agentId+tokenIn?).
    - Recommendation: index `agentId`, `signalId`, `tokenIn` (3 indexed max is fine); emit the rest as data. Low-cost to over-emit now.
+   - **RESOLVED (2026-06-10):** Index `agentId`, `signalId`, `tokenIn` (3 indexed fields), emit the rest as data. Implemented by **Plan 01-02** (`event SignalDecoded(uint256 indexed agentId, uint256 indexed signalId, address indexed tokenIn, address tokenOut, uint256 amountIn, uint256 minAmountOut, uint24 fee)`).
 
 ---
 

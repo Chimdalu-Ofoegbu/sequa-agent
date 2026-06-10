@@ -169,4 +169,5 @@ Synthesized from `Sequa UI-UX Prompt.md` (SPEC, precedence 1). These are non-neg
 ## CON-fusionx-router — Single-hop swap interface
 - source: `PHASE-0-RESEARCH.md` §1, §2
 - type: api-contract
-- content: All mirror execution uses FusionX V3 `ISwapRouter.exactInputSingle` (identical to Uniswap V3 surface). Single-hop only — no multi-hop routing. Router whitelisted inside `SequaExecutor.sol`.
+- content: All mirror execution uses the FusionX V3 `ISwapRouter.exactInputSingle` (identical to Uniswap V3 surface). Single-hop only — no multi-hop routing. Router whitelisted inside `SequaExecutor.sol`.
+- **Sepolia note (2026-06-10, Phase 1):** On Mantle Sepolia the router is a **self-deployed canonical Uniswap V3 fork**, not FusionX (FusionX V3 is not on chain 5003 — see DEC-001 amendment). The interface contract is unchanged: `exactInputSingle((tokenIn,tokenOut,fee,recipient,deadline,amountIn,amountOutMinimum,sqrtPriceLimitX96))` selector `0x414bf389`. NOTE: this is the 8-field router struct, distinct from the opaque 5-field D-07 signal payload tuple — do not conflate them.
