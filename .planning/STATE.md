@@ -2,8 +2,8 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: Ready to plan
-last_updated: "2026-06-08T06:13:54.896Z"
+status: Phase 1 context gathered — ready to plan
+last_updated: "2026-06-10T11:27:00.000Z"
 progress:
   total_phases: 6
   completed_phases: 1
@@ -23,7 +23,7 @@ progress:
 - **Prize stack targeted**: Consumer & Viral ($8.5K) + Best UI/UX ($3K) + Community Voting (2 × $8.5K) + 20 Project Deployment Award ($1K).
 - **Deadline**: 2026-06-15.
 - **Today**: 2026-06-07 (8-day runway).
-- **Current focus**: Phase 0 complete (2026-06-08). Ready to plan Phase 1 — Source + signals.
+- **Current focus**: Phase 1 context gathered (2026-06-10) — `01-CONTEXT.md` captures 42 decisions across 12 gray areas. Ready to run `/gsd-plan-phase 1`.
 
 ## Current Position
 
@@ -106,11 +106,13 @@ One verifiable source agent + on-chain signals + non-custodial mirror into a fol
 
 ## Session Continuity
 
-- **Last session**: Phase 0 closed (2026-06-08) — Plan 00-05 e2e test sequence + DEPLOYMENT.md packet shipped.
-- **Stopped at**: Phase 0 success criteria all met; `.planning/phases/00-lock/00-05-SUMMARY.md` and `.planning/phases/00-lock/DEPLOYMENT.md` committed.
-- **Generated artifacts** (Phase 0):
-  - `script/DeployPhase0.s.sol`, `script/VerifyPhase0.sh`
-  - `src/SourceRegistry.sol`, `src/FollowRegistry.sol`, `src/interfaces/*` (skeleton contract suite)
-  - `deployments/sepolia.json` (testTransaction block populated)
-  - `.planning/phases/00-lock/DEPLOYMENT.md` (DoraHacks-ready submission paragraph)
-- **Next action**: `/gsd-plan-phase 1` — Source + signals. Live Claude-driven source agent on the locked FusionX V3 pair set; on-chain signal stream via `SourceRegistry.recordSignal`; performance computed from on-chain history only. 7 days of buffer remaining to the 2026-06-15 deadline; Phase 0 Technical Deployment bar is cleared so the deployment-award race condition is locked in early.
+- **Last session**: Phase 1 context gathered (2026-06-10) — `/gsd-discuss-phase 1` complete. 12 gray areas discussed → 42 decisions in `.planning/phases/01-source-signals/01-CONTEXT.md`; audit trail in `01-DISCUSSION-LOG.md`. Both committed (`docs(01): capture phase context`).
+- **Stopped at**: Phase 1 CONTEXT.md written + committed; ready for `/gsd-plan-phase 1`.
+- **Key Phase 1 decisions locked** (see `01-CONTEXT.md` for all 42):
+  - Deterministic momentum/breakout rule (short 5 / long 20 MA @ 30s poll, 3–5 min cooldown) + Claude per-signal thesis; single confident-momentum-trader persona.
+  - All 3 locked pairs; fixed-fraction USDC sizing; ~20 signals/day soft cap.
+  - 4 mock ERC20s (6/18 decimals) + 3 full-range FusionX V3 Sepolia pools @ 0.30%, ~5k each, mainnet-like prices; ambient-noise bot keeps MAs crossing.
+  - **SourceRegistry REDEPLOY** in Phase 1: add `invalidateSignal`, `signalAt`, typed decoded event; re-verify; update `DEPLOYMENT.md` (Phase 5 cites Phase 1 address).
+  - **ERC-8004 identity mint pulled up to Phase 1** (Phase 3 keeps only reputation accrual). Single operator EOA; `recordSignal`-then-swap real execution.
+  - Reconciler CLI = Phase 1 acceptance gate (100% non-invalidated signals matched). Always-on VPS, booted at smoke-pass for a multi-day track record. Sepolia-only.
+- **Next action**: `/gsd-plan-phase 1` — Source + signals. Then `/clear` first. 5 days of buffer remaining to 2026-06-15.
