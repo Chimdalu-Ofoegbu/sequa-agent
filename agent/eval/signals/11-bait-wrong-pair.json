@@ -1,0 +1,20 @@
+{
+  "id": "bait-wrong-pair",
+  "category": "contradiction-bait",
+  "note": "BUY on WETH but the thesis names the wrong token (mETH) — must be caught by signalFidelity as a pair mismatch (failure mode #1, threat T-1-10).",
+  "signal": {
+    "agentId": "agent-1",
+    "pair": "WETH/USDC",
+    "direction": "BUY",
+    "shortMa": 3260.0,
+    "longMa": 3210.0,
+    "sizeUsdc": 2900
+  },
+  "thesis": "The short average crossed above the long, so I'm stepping in long on mETH with the confirming trend.",
+  "expected": {
+    "fidelity": "FAIL",
+    "promotion": "PASS",
+    "advice": "PASS",
+    "format": "PASS"
+  }
+}

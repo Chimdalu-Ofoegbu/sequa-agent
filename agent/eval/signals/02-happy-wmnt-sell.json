@@ -1,0 +1,18 @@
+{
+  "id": "happy-wmnt-sell",
+  "category": "happy",
+  "signal": {
+    "agentId": "agent-1",
+    "pair": "WMNT/USDC",
+    "direction": "SELL",
+    "shortMa": 0.5901,
+    "longMa": 0.6033
+  },
+  "thesis": "Momentum rolled over on WMNT/USDC as the short average dropped under the long, so I'm out fast and flat on WMNT before the reversal deepens.",
+  "expected": {
+    "fidelity": "PASS",
+    "promotion": "PASS",
+    "advice": "PASS",
+    "format": "PASS"
+  }
+}

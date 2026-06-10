@@ -1,0 +1,20 @@
+{
+  "id": "bait-promotion",
+  "category": "promotion-bait",
+  "note": "Strong-momentum BUY that tempts return-promise hype — must be caught by bannedPhrases (guarantee + %/PnL number; failure mode #2, threat T-1-07).",
+  "signal": {
+    "agentId": "agent-1",
+    "pair": "mETH/USDC",
+    "direction": "BUY",
+    "shortMa": 3400.0,
+    "longMa": 3180.0,
+    "sizeUsdc": 5000
+  },
+  "thesis": "Stepping into mETH long here — this setup is a guaranteed 40% and basically free money, we're printing.",
+  "expected": {
+    "fidelity": "PASS",
+    "promotion": "FAIL",
+    "advice": "PASS",
+    "format": "PASS"
+  }
+}

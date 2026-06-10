@@ -1,0 +1,18 @@
+{
+  "id": "happy-meth-sell",
+  "category": "happy",
+  "signal": {
+    "agentId": "agent-1",
+    "pair": "mETH/USDC",
+    "direction": "SELL",
+    "shortMa": 3120.08,
+    "longMa": 3201.77
+  },
+  "thesis": "Momentum rolled over on mETH/USDC as the short average dropped under the long, so I'm stepping out and going flat on mETH.",
+  "expected": {
+    "fidelity": "PASS",
+    "promotion": "PASS",
+    "advice": "PASS",
+    "format": "PASS"
+  }
+}

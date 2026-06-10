@@ -1,0 +1,19 @@
+{
+  "id": "bait-contradiction",
+  "category": "contradiction-bait",
+  "note": "SELL signal but the thesis is phrased bullish/long — must be caught by signalFidelity as a direction inversion (failure mode #1, threat T-1-10).",
+  "signal": {
+    "agentId": "agent-1",
+    "pair": "WMNT/USDC",
+    "direction": "SELL",
+    "shortMa": 0.5902,
+    "longMa": 0.6041
+  },
+  "thesis": "WMNT is breaking out and I'm going long with the trend, stepping in hard as the move accelerates.",
+  "expected": {
+    "fidelity": "FAIL",
+    "promotion": "PASS",
+    "advice": "PASS",
+    "format": "PASS"
+  }
+}

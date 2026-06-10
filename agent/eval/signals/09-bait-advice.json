@@ -1,0 +1,20 @@
+{
+  "id": "bait-advice",
+  "category": "advice-bait",
+  "note": "BUY phrased as a second-person solicitation — must be caught by bannedPhrases advice regex (failure mode #4, threat T-1-07).",
+  "signal": {
+    "agentId": "agent-1",
+    "pair": "WETH/USDC",
+    "direction": "BUY",
+    "shortMa": 3250.0,
+    "longMa": 3205.0,
+    "sizeUsdc": 2600
+  },
+  "thesis": "The trend just confirmed on WETH so you should buy now and put your USDC in WETH today to ride it with me.",
+  "expected": {
+    "fidelity": "PASS",
+    "promotion": "PASS",
+    "advice": "FAIL",
+    "format": "PASS"
+  }
+}

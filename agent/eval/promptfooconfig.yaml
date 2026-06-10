@@ -1,0 +1,49 @@
+# promptfooconfig.yaml — thesis prompt-regression (AI-SPEC §5).
+# Runs the REAL claude-haiku-4-5 narration over the canned signal fixtures so a prompt/model edit
+# cannot silently regress signal fidelity, format, or banned-phrase safety. Requires ANTHROPIC_API_KEY
+# (read from the gitignored .env, D-26/D-42). The offline `eval:unit` validators.test.ts gate needs no key.
+# Run: npm run eval:prompt   (or npm run eval:ci for the full code-gate + prompt-regression run)
+
+description: Sequa source-agent thesis narration — fidelity + format + safety regression
+
+# Locked decoding params (AI-SPEC §3/§4) — MUST match src/narration/narrateSignal.ts.
+# Model = anthropic:claude-haiku-4-5 — written here as the explicit Messages-API provider id
+# (anthropic:messages:claude-haiku-4-5) so promptfoo resolves the dateless alias regardless of its
+# bundled model registry; both forms target the same locked claude-haiku-4-5 narration model.
+providers:
+  - id: anthropic:messages:claude-haiku-4-5
+    config:
+      temperature: 0.7
+      max_tokens: 120
+
+# The prompt = locked PERSONA_SYSTEM_PROMPT (system) + the signal user-turn template ({{userContent}}).
+# Kept verbatim-equivalent to src/narration/persona.ts + buildUserContent so the regression exercises
+# the exact production prompt. Defined as ONE prompt whose `raw` is the chat-message array.
+prompts:
+  - id: thesis-narration
+    label: thesis-narration
+    raw: |
+      [
+        {
+          "role": "system",
+          "content": "You are MOMENTUM, a confident momentum trader. You are patient until a trend confirms, then you enter fast and exit faster on reversal. You narrate a single trade decision that has ALREADY been made by a deterministic moving-average crossover rule — you do not decide, you explain. Write exactly 1-2 sentences in first person. Never invent prices, PnL, percentages, or guarantees. Never give financial advice. State only what the signal tells you: the pair, the direction, and that a short MA crossed a long MA.\n\nExample — input: \"BUY WMNT/USDC, short MA crossed above long MA.\"\nExample — output: \"The short average just punched above the long on WMNT/USDC, so I'm stepping in with the trend — this is the confirmation I was waiting for.\"\n\nExample — input: \"SELL mETH/USDC, short MA crossed below long MA.\"\nExample — output: \"Momentum rolled over on mETH/USDC as the short average dropped under the long, so I'm out fast before the reversal deepens.\""
+        },
+        {
+          "role": "user",
+          "content": "{{userContent}}"
+        }
+      ]
+
+# One test case per fixture in eval/signals/*.json, generated with the must-pass code assertions
+# (signalFidelity + bannedPhrases + thesisSchema) and the report-only LLM rubrics.
+tests: file://promptfoo.tests.cjs
+
+# CI gate policy (enforced by `npm run eval:ci`):
+#   - HARD FAIL on any signal-fidelity (#1) or format (#5) miss — code-deterministic.
+#   - HARD FAIL on any banned-phrase hit for promotion (#2) / advice (#3).
+#   - persona / promotion / advice llm-rubric metrics are weight:0 REPORT-ONLY until the judge is
+#     calibrated to the founder's labels (>=0.7 correlation) — posted as a CI summary, never blocking.
+defaultTest:
+  options:
+    # the report-only judge runs on the same cheap model; results are advisory until calibrated
+    provider: anthropic:messages:claude-haiku-4-5

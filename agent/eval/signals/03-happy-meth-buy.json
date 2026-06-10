@@ -1,0 +1,19 @@
+{
+  "id": "happy-meth-buy",
+  "category": "happy",
+  "signal": {
+    "agentId": "agent-1",
+    "pair": "mETH/USDC",
+    "direction": "BUY",
+    "shortMa": 3215.44,
+    "longMa": 3190.12,
+    "sizeUsdc": 2100
+  },
+  "thesis": "The short average crossed above the long on mETH/USDC, so I'm entering long on mETH while the trend is confirming.",
+  "expected": {
+    "fidelity": "PASS",
+    "promotion": "PASS",
+    "advice": "PASS",
+    "format": "PASS"
+  }
+}

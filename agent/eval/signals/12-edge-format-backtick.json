@@ -1,0 +1,20 @@
+{
+  "id": "edge-format-backtick",
+  "category": "format-edge",
+  "note": "A thesis that leaks a JSON/markdown-breaking backtick (and brace) — must be caught by the thesisSchema format gate (failure mode #5, threat T-1-08).",
+  "signal": {
+    "agentId": "agent-1",
+    "pair": "mETH/USDC",
+    "direction": "BUY",
+    "shortMa": 3208.0,
+    "longMa": 3185.0,
+    "sizeUsdc": 1800
+  },
+  "thesis": "Stepping in long on mETH as the trend confirms `tokenIn: mETH` {raw signal leak}.",
+  "expected": {
+    "fidelity": "PASS",
+    "promotion": "PASS",
+    "advice": "PASS",
+    "format": "FAIL"
+  }
+}

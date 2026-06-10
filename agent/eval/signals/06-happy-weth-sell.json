@@ -1,0 +1,18 @@
+{
+  "id": "happy-weth-sell",
+  "category": "happy",
+  "signal": {
+    "agentId": "agent-1",
+    "pair": "WETH/USDC",
+    "direction": "SELL",
+    "shortMa": 3175.2,
+    "longMa": 3221.4
+  },
+  "thesis": "The short average slipped under the long on WETH/USDC, so I'm exiting and going flat on WETH before the move runs against me.",
+  "expected": {
+    "fidelity": "PASS",
+    "promotion": "PASS",
+    "advice": "PASS",
+    "format": "PASS"
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "id": "happy-weth-buy",
+  "category": "happy",
+  "signal": {
+    "agentId": "agent-1",
+    "pair": "WETH/USDC",
+    "direction": "BUY",
+    "shortMa": 3244.9,
+    "longMa": 3208.55,
+    "sizeUsdc": 2750
+  },
+  "thesis": "The short average pushed above the long on WETH/USDC, so I'm going long on WETH and riding the confirmation.",
+  "expected": {
+    "fidelity": "PASS",
+    "promotion": "PASS",
+    "advice": "PASS",
+    "format": "PASS"
+  }
+}

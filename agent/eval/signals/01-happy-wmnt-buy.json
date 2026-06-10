@@ -1,0 +1,19 @@
+{
+  "id": "happy-wmnt-buy",
+  "category": "happy",
+  "signal": {
+    "agentId": "agent-1",
+    "pair": "WMNT/USDC",
+    "direction": "BUY",
+    "shortMa": 0.6123,
+    "longMa": 0.6011,
+    "sizeUsdc": 3000
+  },
+  "thesis": "The short average just punched above the long on WMNT/USDC, so I'm stepping in with the trend on WMNT.",
+  "expected": {
+    "fidelity": "PASS",
+    "promotion": "PASS",
+    "advice": "PASS",
+    "format": "PASS"
+  }
+}
