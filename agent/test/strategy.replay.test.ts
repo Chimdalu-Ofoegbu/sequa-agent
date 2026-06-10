@@ -18,19 +18,18 @@ const AGENT_ID = 'agent-1';
 
 // --- price-series fixtures -------------------------------------------------
 // A series long enough to fill the 20-tick long window, ending in an UP-cross
-// (short MA finishes above long MA, having been below on the prior tick) → BUY.
-// 20 low ticks then a sharp ramp pulls the 5-MA above the 20-MA on the final tick.
+// (short MA finishes above long MA, having been EQUAL on the prior tick) → BUY.
+// 24 flat ticks (short MA == long MA == 100) then one sharp jump pulls the 5-MA
+// above the 20-MA on the FINAL tick — a clean cross *on the last tick*.
 function bullishCrossSeries(): number[] {
-  const flat = Array.from({ length: 20 }, () => 100);
-  const ramp = [101, 103, 106, 110, 118]; // sharp ramp pulls short MA above long MA
-  return [...flat, ...ramp];
+  const flat = Array.from({ length: 24 }, () => 100);
+  return [...flat, 130]; // last-tick jump → short MA 106 > long MA 101.5 (was 100 == 100)
 }
 
-// A series ending in a DOWN-cross (short finishes below long, was above on prior tick) → SELL.
+// A series ending in a DOWN-cross (short finishes below long, was equal on prior tick) → SELL.
 function bearishCrossSeries(): number[] {
-  const flat = Array.from({ length: 20 }, () => 100);
-  const drop = [99, 97, 94, 90, 82]; // sharp drop pulls short MA below long MA
-  return [...flat, ...drop];
+  const flat = Array.from({ length: 24 }, () => 100);
+  return [...flat, 70]; // last-tick drop → short MA 94 < long MA 98.5 (was 100 == 100)
 }
 
 // A flat / no-cross series → HOLD (short never crosses long).
