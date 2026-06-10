@@ -11,7 +11,9 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 // Mock the Anthropic SDK BEFORE importing any module that constructs the client singleton.
 // The mock lets each test drive what `client.messages.create` returns / throws.
-const createMock = vi.fn();
+// `vi.hoisted` is required because vi.mock is hoisted above plain const declarations — the
+// factory would otherwise reference createMock before initialization.
+const { createMock } = vi.hoisted(() => ({ createMock: vi.fn() }));
 vi.mock('@anthropic-ai/sdk', () => {
   class MockAnthropic {
     messages = { create: createMock };
