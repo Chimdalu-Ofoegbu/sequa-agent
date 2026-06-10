@@ -2,11 +2,32 @@
 src = "src"
 out = "out"
 libs = ["lib"]
-solc = "0.8.24"
+# auto_detect_solc replaces the hard `solc = "0.8.24"` pin (01-SPIKE-FINDINGS §c).
+# REQUIRED so the vendored canonical Uniswap V3 contracts (solc 0.7.6) and the
+# repo's own src/ contracts (solc 0.8.x / OZ v5) compile in one project without a
+# version collision. src/ pragmas stay pinned at 0.8.24 for deterministic bytecode.
+auto_detect_solc = true
+# Silences the noisy auto-detected `openzeppelin-contracts/` remapping that would
+# otherwise clobber the dual OZ mapping below (01-SPIKE-FINDINGS §c).
+auto_detect_remappings = false
 optimizer = true
 optimizer_runs = 200
 via_ir = false
 evm_version = "paris"
+# Remappings live here (root remappings.txt deleted) so the dual OZ mapping is stable.
+# - src/      -> OZ v5      via  @openzeppelin/contracts/
+# - periphery -> OZ 3.4     via  @openzeppelin-v3/contracts/ (periphery imports were
+#   sed-rewritten to this prefix; contextual `context:prefix=target` remappings
+#   SILENTLY FAIL on Windows Foundry 1.5.1 — 01-SPIKE-FINDINGS §b).
+remappings = [
+    "forge-std/=lib/forge-std/src/",
+    "@openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/",
+    "@openzeppelin-v3/contracts/=lib/openzeppelin-contracts-3.4/contracts/",
+    "@uniswap/v3-core/=lib/v3-core/",
+    "@uniswap/v3-periphery/=lib/v3-periphery/",
+    "@uniswap/lib/=lib/solidity-lib/",
+    "base64-sol/=lib/base64-sol/",
+]
 
 [rpc_endpoints]
 mantle_sepolia = "https://rpc.sepolia.mantle.xyz"

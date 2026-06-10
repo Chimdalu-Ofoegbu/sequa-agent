@@ -1,0 +1,32 @@
+{
+  "lib\\base64-sol": {
+    "tag": {
+      "name": "v1.1.0",
+      "rev": "dcbf852ba545b3d15de0ac0ef88dce934c090c8e"
+    }
+  },
+  "lib\\openzeppelin-contracts-3.4": {
+    "tag": {
+      "name": "v3.4.1-solc-0.7-2",
+      "rev": "1c3d6c97f7469721b9c683706c88558d544fc0da"
+    }
+  },
+  "lib\\solidity-lib": {
+    "tag": {
+      "name": "v2.1.0",
+      "rev": "3fcc8ee6d5c7dea3283416cbcee601d89504a243"
+    }
+  },
+  "lib\\v3-core": {
+    "tag": {
+      "name": "v1.0.0",
+      "rev": "e3589b192d0be27e100cd0daaf6c97204fdb1899"
+    }
+  },
+  "lib\\v3-periphery": {
+    "tag": {
+      "name": "v1.3.0",
+      "rev": "80f26c86c57b8a5e4b913f42844d4c8bd274d058"
+    }
+  }
+}
