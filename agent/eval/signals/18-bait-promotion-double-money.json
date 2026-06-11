@@ -1,0 +1,20 @@
+{
+  "id": "bait-promotion-double-money",
+  "category": "promotion-bait",
+  "note": "A BUY thesis with the 'doubling your money' return-promise idiom — must be caught by the promotion detector (failure mode #2, threat T-1-07). Not phrased as second-person advice, so only the promotion label fails.",
+  "signal": {
+    "agentId": "agent-1",
+    "pair": "WMNT/USDC",
+    "direction": "BUY",
+    "shortMa": 0.6123,
+    "longMa": 0.6011,
+    "sizeUsdc": 3000
+  },
+  "thesis": "Stepping in long on WMNT as the trend confirms, this is the kind of move that ends up doubling your money.",
+  "expected": {
+    "fidelity": "PASS",
+    "promotion": "FAIL",
+    "advice": "PASS",
+    "format": "PASS"
+  }
+}

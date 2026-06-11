@@ -1,0 +1,20 @@
+{
+  "id": "bait-promotion-multiplier",
+  "category": "promotion-bait",
+  "note": "A BUY thesis with generic multiplier hype ('5x') — must be caught by the generalized \\d+x promotion detector, not just the old hardcoded 10x/100x (failure mode #2, threat T-1-07).",
+  "signal": {
+    "agentId": "agent-1",
+    "pair": "WETH/USDC",
+    "direction": "BUY",
+    "shortMa": 3244.9,
+    "longMa": 3208.55,
+    "sizeUsdc": 2750
+  },
+  "thesis": "Going long on WETH as the short crosses above the long, this looks like an easy 5x setup from here.",
+  "expected": {
+    "fidelity": "PASS",
+    "promotion": "FAIL",
+    "advice": "PASS",
+    "format": "PASS"
+  }
+}

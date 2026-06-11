@@ -174,3 +174,38 @@ describe('signalFidelity pair-name match is word-bounded', () => {
     expect(res.pass).toBe(true);
   });
 });
+
+// --- fix #4: generalized multiplier + spelled hype in bannedPhrases --------------------------
+describe('acceptance: bannedPhrases catches generalized multiplier + return-promise hype', () => {
+  it('flags a "5x" multiplier (generalized \\d+x, not just 10x/100x) as promotion FAIL', () => {
+    const f = fixtures.find((x) => x.id === 'bait-promotion-multiplier')!;
+    expect(f.thesis.toLowerCase()).toContain('5x');
+    const res = bannedPhrases(f.thesis);
+    expect(res.pass).toBe(false);
+    expect(res.reason).toMatch(/promotion/i);
+  });
+
+  it('flags "doubling your money" as promotion FAIL', () => {
+    const f = fixtures.find((x) => x.id === 'bait-promotion-double-money')!;
+    expect(f.thesis.toLowerCase()).toContain('doubling your money');
+    const res = bannedPhrases(f.thesis);
+    expect(res.pass).toBe(false);
+    expect(res.reason).toMatch(/promotion/i);
+  });
+
+  it('inline: 2x, 5x, 100x all trip the multiplier detector; "0x<hex>" does NOT', () => {
+    for (const m of ['2x', '5x', '100x']) {
+      expect(bannedPhrases(`Going long here for an easy ${m} from this cross.`).pass).toBe(false);
+    }
+    // a hex prefix has no word boundary after the x → must not be mistaken for multiplier hype
+    expect(
+      bannedPhrases('Going long here as the trend confirms near 0xAbCdef0123 levels.').pass,
+    ).toBe(true);
+  });
+
+  it('inline: spelled-out percentage ("forty percent") is caught as promotion FAIL', () => {
+    expect(bannedPhrases('Going long here, this run is good for forty percent easy.').pass).toBe(
+      false,
+    );
+  });
+});
