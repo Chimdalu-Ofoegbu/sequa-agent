@@ -9,7 +9,8 @@
 
 | Contract | Address | Verification | Deploy tx |
 |---|---|---|---|
-| `SourceRegistry.sol` | `0x97a724ca8d70aee206b8d56925a735511d3cd5c8` | [Verified ✓](https://sepolia.mantlescan.xyz/address/0x97a724ca8d70aee206b8d56925a735511d3cd5c8#code) | [`0xffd279be92b4cf4c7b02b38c15a5b7f860a9d66c5fb841f2ecb9451db9fea08a`](https://sepolia.mantlescan.xyz/tx/0xffd279be92b4cf4c7b02b38c15a5b7f860a9d66c5fb841f2ecb9451db9fea08a) |
+| `SourceRegistry.sol` **(Phase 1 redeploy — extended ABI, cite THIS, D-31)** | `0x9D23f4b25442D6FBA4529a3FD1F1b3B5B9e3F090` | [Verified ✓](https://sepolia.mantlescan.xyz/address/0x9D23f4b25442D6FBA4529a3FD1F1b3B5B9e3F090#code) | [`0x89425595559bb003db543f7c9b0cac2f00c67bfc91d1c66a8de40b1c14ecfa6a`](https://sepolia.mantlescan.xyz/tx/0x89425595559bb003db543f7c9b0cac2f00c67bfc91d1c66a8de40b1c14ecfa6a) |
+| `SourceRegistry.sol` _(Phase 0 skeleton — superseded, do not cite)_ | `0x97a724ca8d70aee206b8d56925a735511d3cd5c8` | [Verified ✓](https://sepolia.mantlescan.xyz/address/0x97a724ca8d70aee206b8d56925a735511d3cd5c8#code) | [`0xffd279be92b4cf4c7b02b38c15a5b7f860a9d66c5fb841f2ecb9451db9fea08a`](https://sepolia.mantlescan.xyz/tx/0xffd279be92b4cf4c7b02b38c15a5b7f860a9d66c5fb841f2ecb9451db9fea08a) |
 | `FollowRegistry.sol` | `0x8d5593076161321af5433742f7514172f2786aec` | [Verified ✓](https://sepolia.mantlescan.xyz/address/0x8d5593076161321af5433742f7514172f2786aec#code) | [`0x111aac30b8e73a5bdc576da3cebbb21e52e971274a06b6e74ed7c68ccb7e49fc`](https://sepolia.mantlescan.xyz/tx/0x111aac30b8e73a5bdc576da3cebbb21e52e971274a06b6e74ed7c68ccb7e49fc) |
 
 Both contracts are publicly verified on Mantle Explorer with source code and exact-match bytecode (Solc 0.8.24, OpenZeppelin Contracts v5.0.2). Owner of both contracts is the deployer EOA `0x0C837aDA52E8Dd4b16Ae39D864FD5eEB82B80b21` per locked decision D-08.

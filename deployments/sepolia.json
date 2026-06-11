@@ -5,11 +5,12 @@
   "deployer": "0x0C837aDA52E8Dd4b16Ae39D864FD5eEB82B80b21",
   "contracts": {
     "sourceRegistry": {
-      "address": "0x97a724ca8d70aee206b8d56925a735511d3cd5c8",
-      "deployTx": "0xffd279be92b4cf4c7b02b38c15a5b7f860a9d66c5fb841f2ecb9451db9fea08a",
-      "explorerUrl": "https://sepolia.mantlescan.xyz/address/0x97a724ca8d70aee206b8d56925a735511d3cd5c8",
-      "verificationUrl": "https://sepolia.mantlescan.xyz/address/0x97a724ca8d70aee206b8d56925a735511d3cd5c8#code",
-      "verified": true
+      "address": "0x9D23f4b25442D6FBA4529a3FD1F1b3B5B9e3F090",
+      "deployTx": "0x89425595559bb003db543f7c9b0cac2f00c67bfc91d1c66a8de40b1c14ecfa6a",
+      "explorerUrl": "https://sepolia.mantlescan.xyz/address/0x9D23f4b25442D6FBA4529a3FD1F1b3B5B9e3F090",
+      "verificationUrl": "https://sepolia.mantlescan.xyz/address/0x9D23f4b25442D6FBA4529a3FD1F1b3B5B9e3F090#code",
+      "verified": true,
+      "note": "Phase 1 extended redeploy (D-31): invalidateSignal, signalAt, typed SignalDecoded. Supersedes Phase 0 skeleton 0x97a724ca8d70aee206b8d56925a735511d3cd5c8. Cite THIS address from Phase 5."
     },
     "followRegistry": {
       "address": "0x8d5593076161321af5433742f7514172f2786aec",
