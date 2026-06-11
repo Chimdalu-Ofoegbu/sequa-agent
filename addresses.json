@@ -36,5 +36,6 @@
     "methUsdc": 3200,
     "wethUsdc": 3200,
     "note": "D-20 mainnet-like reference prices (USDC per token). WMNT pool ~5k USDC depth; mETH/WETH pools ~25k USDC depth (deviation from D-19's literal 5k so a $3200 asset has realistic single-token depth)."
-  }
+  },
+  "agentId": "147"
 }
