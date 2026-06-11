@@ -71,12 +71,36 @@ interface NoiseLeg {
   label: string;
 }
 
+/** A directional run on one pair: the buy leg + the sell leg, so a run can hold ONE direction. */
+interface NoisePair {
+  /** pair key for logging. */
+  key: string;
+  /** USDC -> base leg (pushes base price UP). */
+  up: NoiseLeg;
+  /** base -> USDC leg (pushes base price DOWN). */
+  down: NoiseLeg;
+}
+
 const SWAP_DEADLINE_BUFFER_SECONDS = 120;
 const MAX_UINT256 = 2n ** 256n - 1n;
+
+/**
+ * Directional-run length (Fix 5): the bot holds ONE direction on ONE pair for this many consecutive
+ * swaps before re-randomizing. Flip-flopping every swap (the old behavior) cancels out and barely
+ * nudges spot, so the source agent's 5/20 MAs never cross. A sustained run of same-direction swaps
+ * walks spot far enough that the short MA actually crosses the long MA → organic signals.
+ */
+const RUN_MIN_SWAPS = 4;
+const RUN_MAX_SWAPS = 8;
 
 /** Pick a uniformly-random element. */
 function pick<T>(arr: readonly T[]): T {
   return arr[Math.floor(Math.random() * arr.length)]!;
+}
+
+/** A random integer in [min, max]. */
+function randomInt(min: number, max: number): number {
+  return Math.floor(min + Math.random() * (max - min + 1));
 }
 
 /** A random delay between 1 and 3 minutes (D-24 cadence). */
@@ -86,9 +110,9 @@ function randomIntervalMs(): number {
   return Math.floor(min + Math.random() * (max - min));
 }
 
-/** A random multiplier in [0.5, 2.0] applied to the nominal amount (≈0.5–2% of pool depth, D-24). */
+/** A random multiplier in [0.8, 1.4] applied to the nominal amount (keeps each leg meaningfully sized). */
 function randomAmountMultiplier(): number {
-  return 0.5 + Math.random() * 1.5;
+  return 0.8 + Math.random() * 0.6;
 }
 
 function sleep(ms: number): Promise<void> {
@@ -108,14 +132,31 @@ async function main(): Promise<void> {
   const swapRouter = addrs.venue.swapRouter;
   const fee = addrs.fee;
 
-  // The noise legs: both directions of each pair so swaps push prices up AND down (MAs cross both ways).
-  const legs: NoiseLeg[] = [
-    { tokenIn: usdc, tokenOut: wmnt, tokenInDecimals: dec.usdc, nominal: 30, label: 'USDC->WMNT' },
-    { tokenIn: wmnt, tokenOut: usdc, tokenInDecimals: dec.wmnt, nominal: 50, label: 'WMNT->USDC' },
-    { tokenIn: usdc, tokenOut: meth, tokenInDecimals: dec.usdc, nominal: 60, label: 'USDC->mETH' },
-    { tokenIn: meth, tokenOut: usdc, tokenInDecimals: dec.meth, nominal: 0.02, label: 'mETH->USDC' },
-    { tokenIn: usdc, tokenOut: weth, tokenInDecimals: dec.usdc, nominal: 60, label: 'USDC->WETH' },
-    { tokenIn: weth, tokenOut: usdc, tokenInDecimals: dec.weth, nominal: 0.02, label: 'WETH->USDC' },
+  // The noise pairs: each holds an UP leg (USDC->base, pushes price up) and a DOWN leg (base->USDC,
+  // pushes price down) so a directional RUN can sustain one direction long enough to cross the MAs.
+  //
+  // Leg sizing (Fix 5): each leg is a MEANINGFUL fraction of the seeded pool depth so a sustained run
+  // moves spot enough bps for the 5/20 MAs to cross. Seeded depths: WMNT/USDC ~5k USDC; mETH & WETH
+  // ~25k USDC. We size each leg at ~4% of depth (and the matching sell leg to roughly the same USDC
+  // value at the ~$0.6 / ~$3200 seed prices):
+  //   WMNT pool (~5k):   ~200 USDC  /  ~330 WMNT  (≈$200 at $0.60)
+  //   mETH/WETH (~25k):  ~1000 USDC /  ~0.31 token (≈$1000 at $3200)
+  const pairs: NoisePair[] = [
+    {
+      key: 'WMNT/USDC',
+      up: { tokenIn: usdc, tokenOut: wmnt, tokenInDecimals: dec.usdc, nominal: 200, label: 'USDC->WMNT' },
+      down: { tokenIn: wmnt, tokenOut: usdc, tokenInDecimals: dec.wmnt, nominal: 330, label: 'WMNT->USDC' },
+    },
+    {
+      key: 'mETH/USDC',
+      up: { tokenIn: usdc, tokenOut: meth, tokenInDecimals: dec.usdc, nominal: 1000, label: 'USDC->mETH' },
+      down: { tokenIn: meth, tokenOut: usdc, tokenInDecimals: dec.meth, nominal: 0.31, label: 'mETH->USDC' },
+    },
+    {
+      key: 'WETH/USDC',
+      up: { tokenIn: usdc, tokenOut: weth, tokenInDecimals: dec.usdc, nominal: 1000, label: 'USDC->WETH' },
+      down: { tokenIn: weth, tokenOut: usdc, tokenInDecimals: dec.weth, nominal: 0.31, label: 'WETH->USDC' },
+    },
   ];
 
   // Startup: top up balances via the public MockERC20 mint (D-17) + max-approve the router once.
@@ -126,43 +167,52 @@ async function main(): Promise<void> {
     { token: weth, decimals: dec.weth, mintAmount: 1_000 },
   ]);
 
-  console.log({ event: 'noise_bot_boot', bot: account.address, legs: legs.length });
+  console.log({ event: 'noise_bot_boot', bot: account.address, pairs: pairs.length, runMin: RUN_MIN_SWAPS, runMax: RUN_MAX_SWAPS });
 
-  // The ambient loop: random leg, random amount, random interval. Forever. A failed swap is logged
-  // and skipped (the next tick re-randomizes) — one revert never kills the bot.
+  // The ambient loop: DIRECTIONAL RUNS (Fix 5). Pick a pair + a direction and HOLD it for a run of
+  // RUN_MIN..RUN_MAX consecutive swaps, walking spot far enough that the source agent's 5/20 MAs
+  // actually cross; then re-randomize the pair/direction/run-length. A failed swap is logged and
+  // skipped (one revert never kills the bot) but still counts toward the run so we don't loop forever.
   for (;;) {
-    const leg = pick(legs);
-    const amount = leg.nominal * randomAmountMultiplier();
-    const amountIn = parseUnits(amount.toFixed(leg.tokenInDecimals === 6 ? 6 : 8), leg.tokenInDecimals);
+    const pairChoice = pick(pairs);
+    const goingUp = Math.random() < 0.5;
+    const leg = goingUp ? pairChoice.up : pairChoice.down;
+    const runLength = randomInt(RUN_MIN_SWAPS, RUN_MAX_SWAPS);
+    console.log({ event: 'noise_run_start', pair: pairChoice.key, direction: goingUp ? 'up' : 'down', runLength, leg: leg.label });
 
-    try {
-      const deadline = BigInt(Math.floor(Date.now() / 1000) + SWAP_DEADLINE_BUFFER_SECONDS);
-      const hash = await wallet.writeContract({
-        address: swapRouter,
-        abi: swapRouterAbi,
-        functionName: 'exactInputSingle',
-        args: [
-          {
-            tokenIn: leg.tokenIn,
-            tokenOut: leg.tokenOut,
-            fee,
-            recipient: account.address,
-            deadline,
-            amountIn,
-            amountOutMinimum: 0n, // noise: accept any output (utility swap, not a tracked trade)
-            sqrtPriceLimitX96: 0n,
-          },
-        ],
-        account,
-        chain: wallet.chain,
-      });
-      await pub.waitForTransactionReceipt({ hash });
-      console.log({ event: 'noise_swap', leg: leg.label, amountIn: amountIn.toString(), tx: hash });
-    } catch (err) {
-      console.warn({ event: 'noise_swap_failed', leg: leg.label, err: String(err) });
+    for (let i = 0; i < runLength; i++) {
+      const amount = leg.nominal * randomAmountMultiplier();
+      const amountIn = parseUnits(amount.toFixed(leg.tokenInDecimals === 6 ? 6 : 8), leg.tokenInDecimals);
+
+      try {
+        const deadline = BigInt(Math.floor(Date.now() / 1000) + SWAP_DEADLINE_BUFFER_SECONDS);
+        const hash = await wallet.writeContract({
+          address: swapRouter,
+          abi: swapRouterAbi,
+          functionName: 'exactInputSingle',
+          args: [
+            {
+              tokenIn: leg.tokenIn,
+              tokenOut: leg.tokenOut,
+              fee,
+              recipient: account.address,
+              deadline,
+              amountIn,
+              amountOutMinimum: 0n, // noise: accept any output (utility swap, not a tracked trade)
+              sqrtPriceLimitX96: 0n,
+            },
+          ],
+          account,
+          chain: wallet.chain,
+        });
+        await pub.waitForTransactionReceipt({ hash });
+        console.log({ event: 'noise_swap', pair: pairChoice.key, leg: leg.label, runStep: i + 1, runLength, amountIn: amountIn.toString(), tx: hash });
+      } catch (err) {
+        console.warn({ event: 'noise_swap_failed', pair: pairChoice.key, leg: leg.label, err: String(err) });
+      }
+
+      await sleep(randomIntervalMs());
     }
-
-    await sleep(randomIntervalMs());
   }
 }
 
