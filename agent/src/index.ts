@@ -36,6 +36,7 @@ import { createHealthStatus, startHealthServer, type HealthStatus } from './heal
 import { PAIRS, baseTokenOf, type Pair, type Signal, type PortfolioState } from './signals/types';
 import { parseUnits, type Address } from 'viem';
 import { erc20Abi } from './chain/abis';
+import { isEntry } from './isEntry';
 
 /** Per-pair cooldown + daily-cap bookkeeping the loop owns (non-AI runtime state). */
 interface LoopState {
@@ -373,17 +374,7 @@ function sleep(ms: number): Promise<void> {
 }
 
 // Only run the loop when executed directly (not when imported by a test).
-// import.meta.url vs argv[1] is the ESM "is this the entry module" check.
-const isEntry = (() => {
-  try {
-    const entry = process.argv[1] ? new URL(`file://${process.argv[1]}`).pathname : '';
-    return import.meta.url.endsWith(entry) || (entry !== '' && import.meta.url.includes('index'));
-  } catch {
-    return false;
-  }
-})();
-
-if (isEntry) {
+if (isEntry(import.meta.url)) {
   main().catch((err) => {
     console.error({ event: 'agent_fatal', err: String(err) });
     process.exitCode = 1;

@@ -11,6 +11,9 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
+    "agent": "tsx src/index.ts",
+    "reconcile": "tsx scripts/reconcile.ts",
+    "noise": "tsx scripts/noiseBot.ts",
     "eval:unit": "vitest run eval/",
     "eval:prompt": "promptfoo eval -c eval/promptfooconfig.yaml --no-progress-bar",
     "eval:ci": "vitest run eval/ && promptfoo eval -c eval/promptfooconfig.yaml --no-cache --share=false"
