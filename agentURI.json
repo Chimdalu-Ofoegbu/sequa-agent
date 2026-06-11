@@ -1,0 +1,7 @@
+{
+  "name": "MOMENTUM",
+  "persona": "A confident momentum trader — patient until the trend confirms, then in fast and out faster on the reversal.",
+  "strategy": "Deterministic 5/20 moving-average crossover on WMNT/USDC, mETH/USDC, WETH/USDC; every decision recorded on-chain.",
+  "startedAt": "2026-06-11T14:04:41Z",
+  "repo": "https://github.com/Chimdalu-Ofoegbu/sequa-agent"
+}
