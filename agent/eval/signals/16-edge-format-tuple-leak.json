@@ -1,0 +1,20 @@
+{
+  "id": "edge-format-tuple-leak",
+  "category": "format-edge",
+  "note": "A BUY thesis that leaks the raw swap tuple — a 40-hex token address plus tokenIn/amountIn field names. Must be caught by the thesisSchema leakage scan (format FAIL); the public card must never expose the raw signal (AI-SPEC §6 containment, failure mode #5).",
+  "signal": {
+    "agentId": "agent-1",
+    "pair": "mETH/USDC",
+    "direction": "BUY",
+    "shortMa": 3215.44,
+    "longMa": 3190.12,
+    "sizeUsdc": 3000
+  },
+  "thesis": "Stepping into mETH long as the trend confirms, tokenIn 0xAbCdef0123456789AbCdef0123456789AbCdef01 amountIn 3000000000.",
+  "expected": {
+    "fidelity": "PASS",
+    "promotion": "PASS",
+    "advice": "PASS",
+    "format": "FAIL"
+  }
+}

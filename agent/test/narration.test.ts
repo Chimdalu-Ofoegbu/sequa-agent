@@ -83,6 +83,32 @@ describe('thesisSchema (AI-SPEC §4b)', () => {
       thesisSchema.safeParse({ thesis: 'Stepping into WMNT now `code` fenced' }).success,
     ).toBe(false);
   });
+
+  it('rejects a 3+ sentence thesis (over the 1-2 sentence budget, AI-SPEC §6)', () => {
+    const threeSentences =
+      'The short crossed above the long on WMNT/USDC. I am stepping in long on WMNT. This is the setup I waited for.';
+    expect(thesisSchema.safeParse({ thesis: threeSentences }).success).toBe(false);
+    // a 2-sentence thesis stays valid (boundary holds)
+    const twoSentences = 'The short crossed above the long on WMNT/USDC. I am stepping in long on WMNT.';
+    expect(thesisSchema.safeParse({ thesis: twoSentences }).success).toBe(true);
+  });
+
+  it('rejects leaked raw signal/tuple data (hex address, tuple field, newline, double-quote)', () => {
+    expect(
+      thesisSchema.safeParse({
+        thesis: 'Stepping into mETH long, tokenIn 0xAbCdef0123456789AbCdef0123456789AbCdef01 amountIn 3000000000.',
+      }).success,
+    ).toBe(false);
+    expect(
+      thesisSchema.safeParse({ thesis: 'Stepping into WMNT long, amountIn 3000000000 minAmountOut 0.' }).success,
+    ).toBe(false);
+    expect(
+      thesisSchema.safeParse({ thesis: 'Stepping into WMNT long with the trend\non a fresh cross.' }).success,
+    ).toBe(false);
+    expect(
+      thesisSchema.safeParse({ thesis: 'Stepping into WMNT long, he "said" the trend confirmed.' }).success,
+    ).toBe(false);
+  });
 });
 
 describe('fallbackThesis (deterministic, fidelity-correct by construction)', () => {
@@ -103,6 +129,26 @@ describe('fallbackThesis (deterministic, fidelity-correct by construction)', () 
 
   it('is deterministic — same signal yields the same text', () => {
     expect(fallbackThesis(buyWmnt())).toBe(fallbackThesis(buyWmnt()));
+  });
+
+  it('passes the STRICTER format gate for every pair + both directions (no fallback loop)', () => {
+    const pairs = ['WMNT/USDC', 'mETH/USDC', 'WETH/USDC'] as const;
+    for (const pair of pairs) {
+      for (const direction of ['BUY', 'SELL'] as const) {
+        const sig: Signal = {
+          agentId: 'agent-1',
+          pair,
+          direction,
+          shortMa: 1,
+          longMa: 1,
+          ...(direction === 'BUY' ? { sizeUsdc: 100 } : {}),
+        };
+        const t = fallbackThesis(sig);
+        const res = thesisSchema.safeParse({ thesis: t });
+        // a fallback that fails the gate the runtime re-applies would loop into itself
+        expect(res.success, `${direction} ${pair} fallback must pass: "${t}"`).toBe(true);
+      }
+    }
   });
 });
 

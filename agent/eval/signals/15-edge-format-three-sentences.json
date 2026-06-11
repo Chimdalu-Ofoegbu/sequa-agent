@@ -1,0 +1,20 @@
+{
+  "id": "edge-format-three-sentences",
+  "category": "format-edge",
+  "note": "A fidelity-correct BUY thesis that runs to THREE sentences — over the 1-2 sentence budget (AI-SPEC §6, D-08). Must be caught by the thesisSchema sentence-count gate (format FAIL) even though pair/direction are correct (failure mode #5).",
+  "signal": {
+    "agentId": "agent-1",
+    "pair": "WMNT/USDC",
+    "direction": "BUY",
+    "shortMa": 0.6123,
+    "longMa": 0.6011,
+    "sizeUsdc": 3000
+  },
+  "thesis": "The short average crossed above the long on WMNT/USDC. I'm stepping in long with the trend on WMNT. This is the confirmation I was waiting for.",
+  "expected": {
+    "fidelity": "PASS",
+    "promotion": "PASS",
+    "advice": "PASS",
+    "format": "FAIL"
+  }
+}
