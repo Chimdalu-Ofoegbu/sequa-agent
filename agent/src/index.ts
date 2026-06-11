@@ -43,7 +43,7 @@ interface LoopState {
   buffers: Record<Pair, PriceSeriesBuffer>;
   lastSignalAtByPair: Record<Pair, number>; // epoch ms of the last recorded signal per pair (D-06)
   signalsToday: number; // count toward the daily soft cap (D-10)
-  dayStartMs: number; // start of the current UTC day window for the cap reset
+  dayStartMs: number; // UTC-midnight (Date.UTC) of the current cap window; rolls on UTC date change
   health: HealthStatus;
 }
 
@@ -65,11 +65,26 @@ function cooldownElapsed(state: LoopState, pair: Pair, nowMs: number): boolean {
   return nowMs - last >= COOLDOWN_MS;
 }
 
-/** Roll the daily soft-cap window if a new UTC day has started; returns whether the cap has room. */
+/**
+ * utcDayStartMs — the epoch-ms timestamp of UTC midnight for the calendar day containing `nowMs`.
+ * Using Date.UTC(y, m, d) (NOT a rolling 24h-from-boot window) means the cap resets on the UTC date
+ * change, so a restart at 23:50 UTC does not carry a near-full count into the next UTC day, and the
+ * window edges are deterministic/calendar-aligned for the demo timeline.
+ */
+function utcDayStartMs(nowMs: number): number {
+  const d = new Date(nowMs);
+  return Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate());
+}
+
+/**
+ * Roll the daily soft-cap window when the UTC calendar date changes; returns whether the cap has room.
+ * NOTE: signalsToday is in-memory only — a process restart resets the count for the current UTC day
+ * (acceptable: the cap is a soft runaway guard, not an exact accounting limit, D-10).
+ */
 function dailyCapHasRoom(state: LoopState, nowMs: number): boolean {
-  const ONE_DAY_MS = 24 * 60 * 60 * 1000;
-  if (nowMs - state.dayStartMs >= ONE_DAY_MS) {
-    state.dayStartMs = nowMs;
+  const todayStart = utcDayStartMs(nowMs);
+  if (todayStart > state.dayStartMs) {
+    state.dayStartMs = todayStart;
     state.signalsToday = 0;
   }
   return state.signalsToday < DAILY_SOFT_CAP;
@@ -246,29 +261,48 @@ async function runTick(cfg: ReturnType<typeof assertConfig>, ctx: ChainContext, 
       continue;
     }
 
-    // Derive the on-chain amounts from the signal + the latest quote.
-    const { amountIn, minAmountOut, tokenIn, tokenOut } = await deriveSwapAmounts(cfg, ctx, signal);
+    // Wrap each per-signal flow so ONE bad signal (a derive throw, a record-tx failure, an unexpected
+    // chain error) never aborts the remaining signals in this tick — they are independent decisions.
+    try {
+      // Derive the on-chain amounts from the signal + the latest quote.
+      const derived = await deriveSwapAmounts(cfg, ctx, signal);
+      if (derived === null) {
+        // SELL with zero/dust holding (or otherwise un-actionable) → skip WITHOUT record+invalidate.
+        console.log({ event: 'signal_skipped_no_amount', pair: signal.pair, direction: signal.direction });
+        continue;
+      }
+      const { amountIn, minAmountOut, tokenIn, tokenOut } = derived;
 
-    const settled = await handleSignal(
-      ctx,
-      signal,
-      amountIn,
-      minAmountOut,
-      cfg.fee,
-      tokenIn,
-      tokenOut,
-      state.health,
-    );
+      const settled = await handleSignal(
+        ctx,
+        signal,
+        amountIn,
+        minAmountOut,
+        cfg.fee,
+        tokenIn,
+        tokenOut,
+        state.health,
+      );
 
-    if (settled) {
-      state.lastSignalAtByPair[signal.pair] = nowMs;
-      state.signalsToday += 1;
-      state.health.lastSignalAt = new Date(nowMs).toISOString();
+      if (settled) {
+        state.lastSignalAtByPair[signal.pair] = nowMs;
+        state.signalsToday += 1;
+        state.health.lastSignalAt = new Date(nowMs).toISOString();
+      }
+    } catch (err) {
+      // Isolate this signal; the tick continues with the rest (Fix: one bad signal must not abort all).
+      console.warn({ event: 'signal_failed', pair: signal.pair, direction: signal.direction, err: String(err) });
     }
   }
 }
 
-/** Convert a buffer of raw bigint spot reads into the number series the pure strategy consumes. */
+/**
+ * Convert a buffer of raw bigint spot reads into the number series the pure strategy consumes.
+ * Number(bigint) is SAFE here: each value is a QuoterV2 USDC-out quote in 6-dec raw units (a ~$3200
+ * asset quote ≈ 3.2e9, far below Number.MAX_SAFE_INTEGER ≈ 9e15), and these numbers feed ONLY the
+ * relative MA-trend comparison — never an on-chain amount, never a matchKey, never anything where a
+ * lost low-order digit could matter. Amounts/keys stay bigint end-to-end elsewhere.
+ */
 function bufToNumberSeries(buf: PriceSeriesBuffer): readonly number[] {
   return buf.series().map((v) => Number(v));
 }
@@ -279,12 +313,17 @@ function bufToNumberSeries(buf: PriceSeriesBuffer): readonly number[] {
  *   SELL → flat-sell the full base-token holding for USDC (tokenIn=base, tokenOut=USDC).
  * minAmountOut is the QuoterV2 spot quote minus a slippage allowance (the T-1-12 bound carried into
  * the swap's amountOutMinimum by recordSignalThenSwap).
+ *
+ * Returns null when the signal is NOT actionable on-chain — specifically a SELL whose live holding is
+ * zero or below a dust minimum. In that case the caller SKIPS the signal entirely (no record + no
+ * invalidate): a zero/dust SELL would revert the swap, which would then record-then-invalidate and
+ * pollute the track record with an avoidable honest-miss for a decision we should never have placed.
  */
 async function deriveSwapAmounts(
   cfg: ReturnType<typeof assertConfig>,
   ctx: ChainContext,
   signal: Signal,
-): Promise<{ amountIn: bigint; minAmountOut: bigint; tokenIn: Address; tokenOut: Address }> {
+): Promise<{ amountIn: bigint; minAmountOut: bigint; tokenIn: Address; tokenOut: Address } | null> {
   const decimals = cfg.addrs.decimals;
   const baseAddr = baseTokenAddress(signal.pair, cfg.tokens);
   const baseDec = baseDecimals(signal.pair, decimals);
@@ -298,16 +337,24 @@ async function deriveSwapAmounts(
     return { amountIn, minAmountOut, tokenIn: cfg.tokens.usdc, tokenOut: baseAddr };
   }
 
-  // SELL — flat-sell the full holding of the base token.
+  // SELL — flat-sell the full holding of the base token. Use ONE balance read for both the actionable
+  // check and the swap amount (no TOCTOU between the decision and the quote/swap).
   const held = (await ctx.pub.readContract({
     address: baseAddr,
     abi: erc20Abi,
     functionName: 'balanceOf',
     args: [ctx.account.address],
   })) as bigint;
+
+  // Skip a SELL with zero or dust holding: 1 base unit (10^baseDec) is the dust floor — below that the
+  // swap would revert (and a revert would record+invalidate, an avoidable honest-miss).
+  const dustFloor = 10n ** BigInt(baseDec); // one whole base token in raw units
+  if (held <= 0n || held < dustFloor) {
+    return null;
+  }
+
   const expectedOut = await quote(ctx.pub, cfg.quoterV2, baseAddr, cfg.tokens.usdc, held, cfg.fee);
   const minAmountOut = (expectedOut * (BPS - SLIPPAGE_BPS)) / BPS;
-  void baseDec; // base decimals implicit in `held` (already raw on-chain units)
   return { amountIn: held, minAmountOut, tokenIn: baseAddr, tokenOut: cfg.tokens.usdc };
 }
 
@@ -348,7 +395,7 @@ async function main(): Promise<void> {
       'WETH/USDC': 0,
     },
     signalsToday: 0,
-    dayStartMs: now,
+    dayStartMs: utcDayStartMs(now), // UTC-midnight aligned (Fix: cap window is a UTC day, not boot+24h)
     health,
   };
 
