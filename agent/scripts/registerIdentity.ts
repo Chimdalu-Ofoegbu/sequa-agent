@@ -12,7 +12,8 @@
 // Flow (all from the operator EOA, one key — D-26):
 //   1. IdentityRegistry.register(AGENT_URI)                          -> mints an ERC-721 identity
 //   2. capture agentId from the Transfer(0x0 -> owner, tokenId) log  -> NOT assumed 1 (Pitfall 6)
-//   3. assert ownerOf(agentId) == operator && getAgentWallet(agentId) is set
+//   3. assert ownerOf(agentId) == operator (the real assertion); getAgentWallet(agentId) is read
+//      informationally only — 0x0 = no separate wallet bound (out of scope for Phase 1, not an error)
 //   4. SourceRegistry.registerSource(agentId, strategyMeta)          -> ties the source to the identity
 //   5. persist agentId to addresses.json (`agentId` field) + agent/.env (AGENT_ID=...)
 //
@@ -136,8 +137,11 @@ export async function registerIdentity(): Promise<bigint> {
   const registerReceipt = await pub.waitForTransactionReceipt({ hash: registerTx });
   const agentId = captureAgentId(registerReceipt.logs, identityRegistry);
 
-  // 2) ASSERT ownership — the operator must own the minted identity, and the agent wallet is set
-  //    (T-1-13: a wrong agentId would attach signals to the wrong identity / revert NotSourceOwner).
+  // 2) ASSERT ownership — the operator MUST own the minted identity. This is the real ownership
+  //    assertion (T-1-13: a wrong agentId would attach signals to the wrong identity / revert
+  //    NotSourceOwner). getAgentWallet is NOT asserted: the canonical IdentityRegistry returns 0x0
+  //    for an unset wallet (it does NOT revert), and binding a separate agent wallet is out of scope
+  //    for Phase 1 — so we log it informationally rather than hard-asserting non-zero.
   const owner = (await pub.readContract({
     address: identityRegistry,
     abi: identityRegistryAbi,
@@ -153,6 +157,16 @@ export async function registerIdentity(): Promise<bigint> {
     functionName: 'getAgentWallet',
     args: [agentId],
   })) as Address;
+  const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
+  console.log({
+    event: 'agent_wallet_read',
+    agentId: agentId.toString(),
+    agentWallet,
+    note:
+      agentWallet.toLowerCase() === ZERO_ADDRESS
+        ? '0x0 = no separate agent wallet bound (out of scope for Phase 1; not an error)'
+        : 'a separate agent wallet is bound to this identity',
+  });
 
   // 3) registerSource — tie the SourceRegistry source to the REAL ERC-8004 agentId (D-27).
   const registerSourceTx = await wallet.writeContract({
