@@ -99,6 +99,13 @@ function scheduleThesisPush(): void {
  * gitCommitAndPush — stage theses/, commit, and push via the GITHUB_PAT. Best-effort; any failure is
  * surfaced as a rejected promise the caller logs (never thrown into the loop). The remote is set to an
  * authenticated https URL using GITHUB_PAT if THESIS_GIT_REMOTE is provided.
+ *
+ * Concurrency safety (Fix 10): another writer (a parallel agent, or a human commit) can advance the
+ * remote between our commit and our push, so a bare `git push` races and fails with non-fast-forward.
+ * We `git pull --rebase` to replay our theses commit on top, then push, with a SINGLE retry of the
+ * pull+push if the first push still loses the race. This is fully OFF the hot path (debounced, after
+ * the trade settled) — a failure here never touches a trade. If the theses repo/remote is missing,
+ * we log a DISTINCT structured warning so it is obvious the store is unconfigured (not a real fault).
  */
 export async function gitCommitAndPush(): Promise<void> {
   const cwd = repoRoot();
@@ -118,10 +125,34 @@ export async function gitCommitAndPush(): Promise<void> {
   // Push. If a dedicated authenticated remote is configured (PAT-embedded https URL), use it; else
   // rely on the ambient credential helper. The PAT is read from env, never logged.
   const remote = process.env.THESIS_GIT_REMOTE;
-  if (remote) {
-    const authed = remote.replace('https://', `https://x-access-token:${pat}@`);
-    await execAsync(`git push ${authed} HEAD`, { cwd });
-  } else {
-    await execAsync('git push', { cwd });
+  const pushCmd = remote
+    ? `git push ${remote.replace('https://', `https://x-access-token:${pat}@`)} HEAD`
+    : 'git push';
+  const pullCmd = remote
+    ? `git pull --rebase ${remote.replace('https://', `https://x-access-token:${pat}@`)} HEAD`
+    : 'git pull --rebase';
+
+  // pull --rebase before push so a concurrent writer's commits don't reject our push; ONE retry.
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      // Rebase our theses commit on top of any remote advance (no-op if remote/upstream is absent).
+      await execAsync(pullCmd, { cwd }).catch((pullErr) => {
+        // A missing remote/upstream is expected when the theses repo is not configured — log distinctly
+        // and continue to attempt the push (which will surface the same condition if truly unconfigured).
+        console.warn({ reason: 'thesis_pull_rebase_skipped', detail: 'remote/upstream absent or pull failed', err: String(pullErr) });
+      });
+      await execAsync(pushCmd, { cwd });
+      return; // pushed cleanly
+    } catch (err) {
+      if (attempt === 0) {
+        console.warn({ reason: 'thesis_push_retry', attempt, err: String(err) });
+        continue; // retry the pull+push once
+      }
+      // Second failure — distinguish "no remote configured" from a genuine push error for the operator.
+      const msg = String(err);
+      const noRemote = /no configured push destination|does not appear to be a git repository|No such remote/i.test(msg);
+      console.warn({ reason: noRemote ? 'thesis_remote_absent' : 'thesis_push_failed', err: msg });
+      throw err; // caller (.catch in scheduleThesisPush) logs; never reaches the hot path
+    }
   }
 }
