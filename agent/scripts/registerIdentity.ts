@@ -22,6 +22,7 @@
 // SourceRegistry address is read at runtime from addresses.json (Plan 06 write-back, W2).
 
 import { readFileSync, writeFileSync, existsSync, appendFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import { getAddress, type Address, type Hex } from 'viem';
 import { decodeEventLog } from 'viem';
 import {
@@ -33,6 +34,7 @@ import {
   requireSourceRegistry,
 } from '../src/chain/clients';
 import { identityRegistryAbi, sourceRegistryAbi } from '../src/chain/abis';
+import { isEntry } from '../src/isEntry';
 
 /**
  * Canonical ERC-8004 IdentityRegistry on Mantle Sepolia (DEC-004 / SequaConstants
@@ -100,7 +102,7 @@ function persistAgentIdToAddresses(agentId: bigint): void {
 
 /** Persist AGENT_ID into agent/.env (append if absent) so the runtime reads it without addresses.json. */
 function persistAgentIdToEnv(agentId: bigint): void {
-  const envPath = new URL('../.env', import.meta.url).pathname;
+  const envPath = fileURLToPath(new URL('../.env', import.meta.url));
   const line = `AGENT_ID=${agentId.toString()}\n`;
   if (existsSync(envPath)) {
     const existing = readFileSync(envPath, 'utf8');
@@ -197,10 +199,10 @@ export async function registerIdentity(): Promise<bigint> {
   return agentId;
 }
 
-// Run only when executed directly (`node registerIdentity.ts`). DEFERRED to Plan 06 — do not run now.
-// import.meta.url vs process.argv[1] guard keeps this importable (for tests) without auto-executing.
-const invokedDirectly = process.argv[1] !== undefined && import.meta.url.endsWith(process.argv[1].replace(/\\/g, '/'));
-if (invokedDirectly) {
+// Run only when executed directly (`tsx scripts/registerIdentity.ts`). Uses the shared isEntry() helper
+// (fileURLToPath + path.resolve) so it works on Windows paths containing spaces (which import.meta.url
+// percent-encodes as %20) and stays importable for tests without auto-executing.
+if (isEntry(import.meta.url)) {
   registerIdentity()
     .then((id) => {
       console.log(`registered agentId ${id.toString()}`);
