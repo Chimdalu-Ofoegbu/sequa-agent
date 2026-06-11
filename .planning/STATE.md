@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: Ready to execute
-last_updated: "2026-06-10T20:41:11.284Z"
+last_updated: "2026-06-11T00:55:00.000Z"
 progress:
   total_phases: 6
   completed_phases: 1
   total_plans: 11
-  completed_plans: 7
-  percent: 64
+  completed_plans: 8
+  percent: 73
 ---
 
 # STATE: Sequa
@@ -28,13 +28,13 @@ progress:
 ## Current Position
 
 Phase: 1
-Plan: 03 complete (Wave 1) — greenfield agent/ workspace: pure MA-crossover core + Claude narration + eval harness
+Plan: 04 complete (Wave 2) — chain layer: viem clients + shared 5-field codec + QuoterV2 simulate read + recordSignal→swap hot path + (deferred) ERC-8004 mint script
 
-- **Phase 1 — Source + signals — In progress** (Plans 01-02 + 01-03 complete): 01-02 extended SourceRegistry; 01-03 built the `agent/` TypeScript cores (pure deterministic strategy + off-hot-path narration + offline eval gate), file-disjoint from 01-01/01-02 in Wave 1. Plan 05 wires the cores into the poll loop.
+- **Phase 1 — Source + signals — In progress** (Plans 01-01, 01-02, 01-03, 01-04 complete): 01-01 live venue + mocks + pools; 01-02 extended SourceRegistry; 01-03 built the `agent/` TypeScript cores (pure strategy + narration + eval); 01-04 built the chain bridge (`agent/src/chain/*` + `agent/scripts/registerIdentity.ts`) — the 5-field codec (D-40), QuoterV2 simulate read, the 2-tx hot path with invalidate-on-revert, and the ERC-8004 mint one-shot (built + type-checked; live mint DEFERRED to Plan 06). Plan 05 wires the strategy/narration cores + chain hot path into the poll loop; Plan 06 redeploys SourceRegistry + runs the live mint.
 - **Phase**: 0 — Lock — Complete
 - **Plans**: 5 plans across 4 waves (00-01 → 00-02/03 → 00-04 → 00-05) — all complete
 - **Status**: Complete (5/5 plans; 3 of 3 official Technical Deployment criteria cleared; submission packet `.planning/phases/00-lock/DEPLOYMENT.md` ready for Phase 5 paste-into-DoraHacks)
-- **Progress**: `[█░░░░░░░░░░░░░░░░░░░] 1/6 phases complete`
+- **Progress**: `[██████████████░░░░░░] 8/11 plans complete (1/6 phases)`
 - **Last activity**: Plan 00-05 completed (2026-06-08) — end-to-end `registerSource → recordSignal → mirror` tx sequence submitted live on Mantle Sepolia from independent deployer + follower EOAs; DEPLOYMENT.md packet committed.
   - SourceRegistry: `0x97a724ca8d70aee206b8d56925a735511d3cd5c8` — [verified](https://sepolia.mantlescan.xyz/address/0x97a724ca8d70aee206b8d56925a735511d3cd5c8#code)
   - FollowRegistry: `0x8d5593076161321af5433742f7514172f2786aec` — [verified](https://sepolia.mantlescan.xyz/address/0x8d5593076161321af5433742f7514172f2786aec#code)
@@ -47,7 +47,7 @@ Plan: 03 complete (Wave 1) — greenfield agent/ workspace: pure MA-crossover co
 | Phase | Name | Status | Non-negotiable |
 |---|---|---|---|
 | 0 | Lock | Complete (2026-06-08) — 5/5 plans, 4/4 waves | Yes |
-| 1 | Source + signals | Ready to plan | Yes |
+| 1 | Source + signals | In progress (4/6 plans: 01-04 complete; 05 poll-loop + 06 redeploy/mint remain) | Yes |
 | 2 | Mirror execution | Not planned | Yes |
 | 3 | ERC-8004 + reputation | Not planned | No (first to cut) |
 | 4 | Frontend wire-up + share card | Not planned | Yes |
@@ -66,6 +66,7 @@ Plan: 03 complete (Wave 1) — greenfield agent/ workspace: pure MA-crossover co
 |---|---|---|---|---|---|
 | 1 | 02 | ~22 min | 2 | 3 | 2026-06-10 |
 | 1 | 03 | 33 min | 3 | 29 | 2026-06-10 |
+| 1 | 04 | ~75 min | 3 | 10 | 2026-06-11 |
 
 ## Accumulated Context
 
@@ -85,6 +86,15 @@ Plan: 03 complete (Wave 1) — greenfield agent/ workspace: pure MA-crossover co
 - `narrateSignalSafe` (the ONLY runtime entry) never throws/blocks — validate → one retry → deterministic fidelity-correct `fallbackThesis`. Locked params: `claude-haiku-4-5`, max_tokens 120, temperature 0.7; client timeout 8000, maxRetries 2.
 - `eval:unit` (vitest over labeled fixtures + signalFidelity/bannedPhrases/thesisSchema) is the always-on offline CI gate — no `ANTHROPIC_API_KEY`. `eval:prompt`/`eval:ci` add the live promptfoo regression.
 - REQ-06 remains Pending: Plan 01-03 built the off-chain cores; REQ-06's on-chain acceptance (real recorded signals, reconciler 100%) completes in Plan 05/06.
+
+### Phase 1 execution decisions (Plan 01-04)
+
+- The chain layer (`agent/src/chain/*`) reads EVERY venue/registry address + the agentId from `addresses.json` AT RUNTIME (W2). `requireSourceRegistry`/`requireAgentId` THROW rather than fall back to a stale dev address — Plan 06 fills `sourceRegistry`; `registerIdentity.ts` fills `agentId` at mint. `recordSignal.ts` has zero `0x` address literal.
+- The D-07 5-field signal codec (`encodeSignal`/`decodeSignal`/`matchKey`) lives ONCE in `reconcile-shared.ts` (D-40), imported by both the runtime hot path and (Plan 05) the reconciler. A `cast abi-encode` fixture asserts byte-equality with the on-chain `abi.encode` — the 5-field tuple is kept distinct from the 8-field UniV3 router struct (derived at swap time).
+- QuoterV2 is read EXCLUSIVELY via viem `simulateContract` (non-view, Pitfall 2) — no view/static read of the quoter in `quote.ts`.
+- Hot path `recordSignalThenSwap`: 2-tx (recordSignal → exactInputSingle) from the operator EOA; `amountOutMinimum = minAmountOut` (slippage bound, T-1-12); on swap revert → `invalidateSignal` then return null (D-30). `ensureApprovals` = one-time idempotent `approve(SwapRouter, type(uint256).max)` per token (D-29).
+- ERC-8004 mint: `registerIdentity.ts` captures the agentId from the `Transfer(0x0→owner)` mint log (NOT 1 — Pitfall 6), asserts `ownerOf==operator`, calls `registerSource`, persists agentId. BUILT + type-checked; the LIVE MINT is DEFERRED to Plan 06 (needs published AGENT_URI + redeployed SourceRegistry) — NOT run in this plan, no on-chain write.
+- Pinned `viem@2.52.2` + `dotenv` as direct agent deps; extended tsconfig `include` with `scripts/**`.
 
 ### Pre-existing assets (factor into planning)
 
@@ -122,8 +132,8 @@ One verifiable source agent + on-chain signals + non-custodial mirror into a fol
 
 ## Session Continuity
 
-- **Last session**: Executed Plan 01-03 (2026-06-10) — stood up the greenfield `agent/` TypeScript workspace: pure replay-deterministic MA-crossover core (`decideSignals`, D-02/D-03/D-05/D-13..D-16), off-hot-path Claude narration (`narrateSignalSafe` never throws/blocks — validate→retry→fallback; locked `claude-haiku-4-5`/120/0.7, client timeout 8000/maxRetries 2), and an eval harness (12 labeled fixtures + signalFidelity + bannedPhrases + thesisSchema + promptfooconfig; `eval:unit` is the always-on offline gate). 66 tests green, no live API call. TDD commits — Task 1: `369adee` (test RED) → `124220c` (feat GREEN); Task 2: `1be7ad9` (test RED) → `27f033d` (feat GREEN); Task 3: `6f9fba4` (feat). 4 auto-fixed deviations (test fixtures + mock hoist + fidelity idiom + promptfoo config), all documented in `01-03-SUMMARY.md`.
-- **Stopped at**: Plan 01-03 complete + committed; `01-03-SUMMARY.md` written + self-check PASSED. The strategy + narration + guardrail interfaces are exported for Plan 05 to wire into the poll loop (`recordSignal → swap` + fire-and-store narration + `/healthz`).
+- **Last session**: Executed Plan 01-04 (2026-06-11) — built the `agent/src/chain/*` layer with viem@2.52.2: `reconcile-shared.ts` (the write-once D-40 5-field codec, cast-fixture byte-equality), `quote.ts` (QuoterV2 via `simulateContract` only, Pitfall 2, + `PriceSeriesBuffer`), `recordSignal.ts` (`recordSignalThenSwap` 2-tx hot path — 5-field tuple → 8-field router struct, invalidate-on-revert D-30, `ensureApprovals` max-approve D-29), `clients.ts` (runtime addresses.json loader, requireSourceRegistry/requireAgentId throw — W2), `abis.ts`. Plus `agent/scripts/registerIdentity.ts` — the ERC-8004 mint + registerSource one-shot that captures the agentId from the mint event (NOT 1, Pitfall 6); BUILT + type-checked, **live mint DEFERRED to Plan 06** (no on-chain write run). Commits — Task 1: `7d48f1f` (test RED) → `22b47b0` (feat GREEN); Task 2: `325c252` (feat); Task 3: `966b821` (feat). 2 auto-fixed Rule-3 deviations (install viem/dotenv; tsconfig include scripts/**). `tsc --noEmit` clean; reconcileShared.test 6/6; full suite 72/72. Documented in `01-04-SUMMARY.md`.
+- **Stopped at**: Plan 01-04 complete + committed; `01-04-SUMMARY.md` written + self-check PASSED. The chain-layer exports (`recordSignalThenSwap`, `ensureApprovals`, `quote`/`PriceSeriesBuffer`, `encodeSignal`/`decodeSignal`/`matchKey`, the `clients.ts` helpers) are ready for Plan 05 to assemble a `ChainContext` and wire the poll loop; Plan 06 redeploys SourceRegistry (writes `addresses.json.sourceRegistry`) + runs `registerIdentity.ts` (the live mint).
 - **Key Phase 1 decisions locked** (see `01-CONTEXT.md` for all 42):
   - Deterministic momentum/breakout rule (short 5 / long 20 MA @ 30s poll, 3–5 min cooldown) + Claude per-signal thesis; single confident-momentum-trader persona.
   - All 3 locked pairs; fixed-fraction USDC sizing; ~20 signals/day soft cap.
@@ -131,4 +141,4 @@ One verifiable source agent + on-chain signals + non-custodial mirror into a fol
   - **SourceRegistry REDEPLOY** in Phase 1: add `invalidateSignal`, `signalAt`, typed decoded event; re-verify; update `DEPLOYMENT.md` (Phase 5 cites Phase 1 address).
   - **ERC-8004 identity mint pulled up to Phase 1** (Phase 3 keeps only reputation accrual). Single operator EOA; `recordSignal`-then-swap real execution.
   - Reconciler CLI = Phase 1 acceptance gate (100% non-invalidated signals matched). Always-on VPS, booted at smoke-pass for a multi-day track record. Sepolia-only.
-- **Next action**: `/gsd-plan-phase 1` — Source + signals. Then `/clear` first. 5 days of buffer remaining to 2026-06-15.
+- **Next action**: Execute Plan 01-05 (poll-loop wiring — assemble a `ChainContext` from `loadAddresses()` + `makeOperatorWalletClient()`, wire `recordSignalThenSwap` + fire-and-store narration + `/healthz`, build the reconciler reusing `reconcile-shared.ts`). Plan 06 then redeploys SourceRegistry + runs the live ERC-8004 mint. 4 days of buffer remaining to 2026-06-15.
