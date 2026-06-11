@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: Ready to execute
-last_updated: "2026-06-11T00:55:00.000Z"
+last_updated: "2026-06-11T01:14:00.000Z"
 progress:
   total_phases: 6
   completed_phases: 1
   total_plans: 11
-  completed_plans: 8
-  percent: 73
+  completed_plans: 9
+  percent: 82
 ---
 
 # STATE: Sequa
@@ -28,13 +28,13 @@ progress:
 ## Current Position
 
 Phase: 1
-Plan: 04 complete (Wave 2) — chain layer: viem clients + shared 5-field codec + QuoterV2 simulate read + recordSignal→swap hot path + (deferred) ERC-8004 mint script
+Plan: 05 complete (Wave 3) — agent runtime: 30s poll loop (await hot path → void narration) + fail-closed config guard + thesis store + /healthz + reconciler CLI (--assert D-40 gate) + ambient noise bot
 
-- **Phase 1 — Source + signals — In progress** (Plans 01-01, 01-02, 01-03, 01-04 complete): 01-01 live venue + mocks + pools; 01-02 extended SourceRegistry; 01-03 built the `agent/` TypeScript cores (pure strategy + narration + eval); 01-04 built the chain bridge (`agent/src/chain/*` + `agent/scripts/registerIdentity.ts`) — the 5-field codec (D-40), QuoterV2 simulate read, the 2-tx hot path with invalidate-on-revert, and the ERC-8004 mint one-shot (built + type-checked; live mint DEFERRED to Plan 06). Plan 05 wires the strategy/narration cores + chain hot path into the poll loop; Plan 06 redeploys SourceRegistry + runs the live mint.
+- **Phase 1 — Source + signals — In progress** (Plans 01-01 .. 01-05 complete; only 01-06 go-live remains): 01-01 live venue + mocks + pools; 01-02 extended SourceRegistry; 01-03 built the `agent/` TypeScript cores (pure strategy + narration + eval); 01-04 built the chain bridge (`agent/src/chain/*` + `agent/scripts/registerIdentity.ts`) — the 5-field codec (D-40), QuoterV2 simulate read, the 2-tx hot path, the ERC-8004 mint one-shot (live mint DEFERRED to Plan 06); 01-05 assembled the runtime — `agent/src/index.ts` 30s poll loop (await recordSignalThenSwap then void narrateAndStore, NEVER awaited), `config.ts` fail-closed `assertConfig()` (W3), `store/thesisStore.ts` (D-09/D-37), `health.ts` /healthz (D-38), `scripts/reconcile.ts` (--assert D-40 acceptance gate, pure classifier), `scripts/noiseBot.ts` (separate EOA, D-24). Build-only: tsc clean + 81 tests green, no live chain run. Plan 06 redeploys SourceRegistry + runs the live mint so assertConfig() stops throwing and the runtime goes live.
 - **Phase**: 0 — Lock — Complete
 - **Plans**: 5 plans across 4 waves (00-01 → 00-02/03 → 00-04 → 00-05) — all complete
 - **Status**: Complete (5/5 plans; 3 of 3 official Technical Deployment criteria cleared; submission packet `.planning/phases/00-lock/DEPLOYMENT.md` ready for Phase 5 paste-into-DoraHacks)
-- **Progress**: `[██████████████░░░░░░] 8/11 plans complete (1/6 phases)`
+- **Progress**: `[████████████████░░░░] 9/11 plans complete (1/6 phases)`
 - **Last activity**: Plan 00-05 completed (2026-06-08) — end-to-end `registerSource → recordSignal → mirror` tx sequence submitted live on Mantle Sepolia from independent deployer + follower EOAs; DEPLOYMENT.md packet committed.
   - SourceRegistry: `0x97a724ca8d70aee206b8d56925a735511d3cd5c8` — [verified](https://sepolia.mantlescan.xyz/address/0x97a724ca8d70aee206b8d56925a735511d3cd5c8#code)
   - FollowRegistry: `0x8d5593076161321af5433742f7514172f2786aec` — [verified](https://sepolia.mantlescan.xyz/address/0x8d5593076161321af5433742f7514172f2786aec#code)
@@ -47,7 +47,7 @@ Plan: 04 complete (Wave 2) — chain layer: viem clients + shared 5-field codec 
 | Phase | Name | Status | Non-negotiable |
 |---|---|---|---|
 | 0 | Lock | Complete (2026-06-08) — 5/5 plans, 4/4 waves | Yes |
-| 1 | Source + signals | In progress (4/6 plans: 01-04 complete; 05 poll-loop + 06 redeploy/mint remain) | Yes |
+| 1 | Source + signals | In progress (5/6 plans: 01-05 runtime complete; 06 redeploy/mint go-live remains) | Yes |
 | 2 | Mirror execution | Not planned | Yes |
 | 3 | ERC-8004 + reputation | Not planned | No (first to cut) |
 | 4 | Frontend wire-up + share card | Not planned | Yes |
@@ -67,6 +67,7 @@ Plan: 04 complete (Wave 2) — chain layer: viem clients + shared 5-field codec 
 | 1 | 02 | ~22 min | 2 | 3 | 2026-06-10 |
 | 1 | 03 | 33 min | 3 | 29 | 2026-06-10 |
 | 1 | 04 | ~75 min | 3 | 10 | 2026-06-11 |
+| 1 | 05 | ~16 min | 3 | 10 | 2026-06-11 |
 
 ## Accumulated Context
 
@@ -95,6 +96,15 @@ Plan: 04 complete (Wave 2) — chain layer: viem clients + shared 5-field codec 
 - Hot path `recordSignalThenSwap`: 2-tx (recordSignal → exactInputSingle) from the operator EOA; `amountOutMinimum = minAmountOut` (slippage bound, T-1-12); on swap revert → `invalidateSignal` then return null (D-30). `ensureApprovals` = one-time idempotent `approve(SwapRouter, type(uint256).max)` per token (D-29).
 - ERC-8004 mint: `registerIdentity.ts` captures the agentId from the `Transfer(0x0→owner)` mint log (NOT 1 — Pitfall 6), asserts `ownerOf==operator`, calls `registerSource`, persists agentId. BUILT + type-checked; the LIVE MINT is DEFERRED to Plan 06 (needs published AGENT_URI + redeployed SourceRegistry) — NOT run in this plan, no on-chain write.
 - Pinned `viem@2.52.2` + `dotenv` as direct agent deps; extended tsconfig `include` with `scripts/**`.
+
+### Phase 1 execution decisions (Plan 01-05)
+
+- The runtime poll loop (`agent/src/index.ts`) enforces THE ordering invariant (AI-SPEC §4 / Pitfall 5): `const signalId = await recordSignalThenSwap(...)` (HOT PATH, awaited) → `if null return` → `void narrateAndStore(...).catch(...)` (NEVER awaited, belt-and-suspenders .catch). A slow/failed Claude can never delay the next 30s tick or the trade. Narration runs `narrateSignalSafe` → pre-publish guardrails (signalFidelity + bannedPhrases, substitute `fallbackThesis` on a trip) → `writeThesis` → one structured log line.
+- `config.ts` `assertConfig()` is the W3 FAIL-CLOSED boot guard: throws on unset/zero agentId (positive int, Pitfall 6/T-1-13), sourceRegistry/swapRouter/quoterV2, the 4 token addresses, and OPERATOR_PRIVATE_KEY — invoked at the top of index/reconcile/noiseBot. Strategy constants live here as the single source of truth: pollMs 30_000, cooldownMs 240_000 (D-06 4-min midpoint), dailySoftCap 20 (D-10), buyFraction 0.30 (D-07), pairOrder [WMNT,mETH,WETH] (D-16), pause flag (D-11).
+- `scripts/reconcile.ts` is BOTH the deliverable and the Phase 1 acceptance gate (D-40): walks SignalRecorded + SignalInvalidated, matches each non-invalidated signal to the operator's settled exactInputSingle swaps via the SHARED `matchKey` codec (imported from reconcile-shared.ts, not reimplemented); `--assert` exits non-zero on any orphan (orphan==0 to pass). An invalidated-without-swap counts `invalidated`, not orphan (D-30). The classifier `classify()` is PURE — unit-tested with fixture arrays (reconcile.test.ts, 9 tests).
+- `store/thesisStore.ts` writes `theses/<agentId>/<signalId>.json` then DEBOUNCED git commit+push via GITHUB_PAT (D-37, commit-flood mitigation); `health.ts` /healthz → {lastTickAt,lastSignalAt,fallbackRate,paused} (D-38); `scripts/noiseBot.ts` uses a SEPARATE NOISE_BOT EOA (D-24), does real swaps, never records signals (grep -c recordSignal == 0), Math.random pair/amount/timing, mints via the public MockERC20 mint at startup.
+- `src/isEntry.ts` is the correct ESM entry guard (resolve(argv[1]) compare) so importing a runnable script in a test never executes its main() — fixed a Rule-1 bug where a loose substring check ran reconcile.ts's main() during the unit test.
+- Build-only by design: `tsc --noEmit` clean + 81 tests green; the agent/reconciler/noise bot were NOT run live (assertConfig() correctly fail-closes on the unset sourceRegistry/agentId until Plan 06's mint/redeploy). npm scripts added: `agent` (tsx src/index.ts), `reconcile` (tsx scripts/reconcile.ts), `noise` (tsx scripts/noiseBot.ts).
 
 ### Pre-existing assets (factor into planning)
 
@@ -132,8 +142,8 @@ One verifiable source agent + on-chain signals + non-custodial mirror into a fol
 
 ## Session Continuity
 
-- **Last session**: Executed Plan 01-04 (2026-06-11) — built the `agent/src/chain/*` layer with viem@2.52.2: `reconcile-shared.ts` (the write-once D-40 5-field codec, cast-fixture byte-equality), `quote.ts` (QuoterV2 via `simulateContract` only, Pitfall 2, + `PriceSeriesBuffer`), `recordSignal.ts` (`recordSignalThenSwap` 2-tx hot path — 5-field tuple → 8-field router struct, invalidate-on-revert D-30, `ensureApprovals` max-approve D-29), `clients.ts` (runtime addresses.json loader, requireSourceRegistry/requireAgentId throw — W2), `abis.ts`. Plus `agent/scripts/registerIdentity.ts` — the ERC-8004 mint + registerSource one-shot that captures the agentId from the mint event (NOT 1, Pitfall 6); BUILT + type-checked, **live mint DEFERRED to Plan 06** (no on-chain write run). Commits — Task 1: `7d48f1f` (test RED) → `22b47b0` (feat GREEN); Task 2: `325c252` (feat); Task 3: `966b821` (feat). 2 auto-fixed Rule-3 deviations (install viem/dotenv; tsconfig include scripts/**). `tsc --noEmit` clean; reconcileShared.test 6/6; full suite 72/72. Documented in `01-04-SUMMARY.md`.
-- **Stopped at**: Plan 01-04 complete + committed; `01-04-SUMMARY.md` written + self-check PASSED. The chain-layer exports (`recordSignalThenSwap`, `ensureApprovals`, `quote`/`PriceSeriesBuffer`, `encodeSignal`/`decodeSignal`/`matchKey`, the `clients.ts` helpers) are ready for Plan 05 to assemble a `ChainContext` and wire the poll loop; Plan 06 redeploys SourceRegistry (writes `addresses.json.sourceRegistry`) + runs `registerIdentity.ts` (the live mint).
+- **Last session**: Executed Plan 01-05 (2026-06-11) — assembled the full agent runtime in `agent/src/` + `agent/scripts/`: `config.ts` (W3 fail-closed `assertConfig()` + locked strategy constants), `store/thesisStore.ts` (theses/<agentId>/<signalId>.json + debounced PAT push, D-09/D-37), `health.ts` (/healthz → {lastTickAt,lastSignalAt,fallbackRate,paused}, D-38), `index.ts` (the 30s poll loop — await recordSignalThenSwap HOT PATH then void narrateAndStore NEVER awaited, cooldown/cap/pause/pair-order enforced, pre-publish guardrails, structured logs), `isEntry.ts` (correct ESM entry guard), `scripts/reconcile.ts` (pure classifier + --assert D-40 acceptance gate, imports the shared codec), `scripts/noiseBot.ts` (separate NOISE_BOT EOA, real swaps, never records signals, Math.random). Commits — Task 1: `a50caf0` (feat); Task 2: `bb864cd` (feat); Task 3: `ba28de7` (feat). 3 auto-fixed deviations (2 Rule-1 bugs in this plan's own Task 2 code: loose entry guard ran main() in the test, stale operatorKeyToAddress ref; 1 Rule-2: documented new .env secrets). `tsc --noEmit` clean; reconcile.test 9/9; full suite 81/81. Build-only — no live chain run (assertConfig fail-closes until Plan 06). Documented in `01-05-SUMMARY.md`.
+- **Stopped at**: Plan 01-05 complete + committed; `01-05-SUMMARY.md` written + self-check PASSED. The runtime is built and type-checks; the Phase 1 acceptance-gate command is `cd agent && npx tsx scripts/reconcile.ts --assert` (run live in Plan 06). Plan 06 redeploys SourceRegistry (writes `addresses.json.sourceRegistry`) + runs `registerIdentity.ts` (the live mint → writes `addresses.json.agentId`) + sets the agent/.env secrets, at which point `assertConfig()` stops throwing and `npm run agent` / `npm run noise` / `npm run reconcile -- --assert` go live.
 - **Key Phase 1 decisions locked** (see `01-CONTEXT.md` for all 42):
   - Deterministic momentum/breakout rule (short 5 / long 20 MA @ 30s poll, 3–5 min cooldown) + Claude per-signal thesis; single confident-momentum-trader persona.
   - All 3 locked pairs; fixed-fraction USDC sizing; ~20 signals/day soft cap.
@@ -141,4 +151,4 @@ One verifiable source agent + on-chain signals + non-custodial mirror into a fol
   - **SourceRegistry REDEPLOY** in Phase 1: add `invalidateSignal`, `signalAt`, typed decoded event; re-verify; update `DEPLOYMENT.md` (Phase 5 cites Phase 1 address).
   - **ERC-8004 identity mint pulled up to Phase 1** (Phase 3 keeps only reputation accrual). Single operator EOA; `recordSignal`-then-swap real execution.
   - Reconciler CLI = Phase 1 acceptance gate (100% non-invalidated signals matched). Always-on VPS, booted at smoke-pass for a multi-day track record. Sepolia-only.
-- **Next action**: Execute Plan 01-05 (poll-loop wiring — assemble a `ChainContext` from `loadAddresses()` + `makeOperatorWalletClient()`, wire `recordSignalThenSwap` + fire-and-store narration + `/healthz`, build the reconciler reusing `reconcile-shared.ts`). Plan 06 then redeploys SourceRegistry + runs the live ERC-8004 mint. 4 days of buffer remaining to 2026-06-15.
+- **Next action**: Execute Plan 01-06 (go live — redeploy + verify the extended SourceRegistry → write `addresses.json.sourceRegistry`; publish AGENT_URI + run `registerIdentity.ts` (live ERC-8004 mint) → write `addresses.json.agentId`; set OPERATOR_PRIVATE_KEY/NOISE_BOT_PRIVATE_KEY/GITHUB_PAT/ANTHROPIC_API_KEY in agent/.env; first live signal; host always-on; run the `reconcile.ts --assert` acceptance gate; write RUN.md). At that point assertConfig() stops throwing and the Plan 05 runtime goes live. 4 days of buffer remaining to 2026-06-15.

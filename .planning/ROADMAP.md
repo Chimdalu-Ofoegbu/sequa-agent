@@ -84,7 +84,7 @@
 - [x] 01-02-PLAN.md — Extend + redeploy SourceRegistry (invalidateSignal, signalAt, typed SignalDecoded) + tests (Wave 1)
 - [x] 01-03-PLAN.md — Greenfield agent/ workspace: pure MA-crossover core + replay tests + Claude narration + eval harness (Wave 1)
 - [x] 01-04-PLAN.md — Chain layer: ERC-8004 mint + registerSource + recordSignal→swap hot path + QuoterV2 quote + shared tuple codec (Wave 2) — chain layer built; live ERC-8004 mint DEFERRED to Plan 06
-- [ ] 01-05-PLAN.md — Runtime: 30s poll loop + thesis store + /healthz + reconciler CLI (D-40 gate) + ambient noise bot (Wave 3)
+- [x] 01-05-PLAN.md — Runtime: 30s poll loop + thesis store + /healthz + reconciler CLI (D-40 gate) + ambient noise bot (Wave 3)
 - [ ] 01-06-PLAN.md — Go live: redeploy/verify + mint identity + first live signal + host always-on + reconciler acceptance gate + RUN.md (Wave 4)
 **UI hint**: no
 
@@ -219,7 +219,7 @@
 | Phase | Plans Complete | Status | Completed |
 |---|---|---|---|
 | 0. Lock | 5/5 | Complete | 2026-06-08 |
-| 1. Source + signals | 4/6 | In progress (Wave 2 done; 05 poll-loop + 06 go-live remain) | - |
+| 1. Source + signals | 5/6 | In progress (Wave 3 done; 06 go-live remains) | - |
 | 2. Mirror execution | 0/0 | Not planned | - |
 | 3. ERC-8004 + reputation | 0/0 | Not planned | - |
 | 4. Frontend wire-up + share card | 0/0 | Not planned | - |
