@@ -145,3 +145,32 @@ describe('acceptance: signalFidelity fails CLOSED when BOTH lexicons co-occur (i
     ).toBe(false);
   });
 });
+
+// --- fix #6: pair name match is word-bounded, not a bare substring ----------------------------
+describe('signalFidelity pair-name match is word-bounded', () => {
+  const methBuy: Signal = {
+    agentId: 'agent-1',
+    pair: 'mETH/USDC',
+    direction: 'BUY',
+    shortMa: 3215.44,
+    longMa: 3190.12,
+    sizeUsdc: 2100,
+  };
+
+  it('"method" does NOT false-pass as naming the mETH pair', () => {
+    // names no real token; "method" merely *contains* "meth" → must NOT satisfy the pair check
+    const res = signalFidelity('Entering long here as the method confirms the trend.', methBuy);
+    expect(res.pass).toBe(false);
+    expect(res.reason).toMatch(/does not name the pair token/i);
+  });
+
+  it('a genuine "mETH" mention (word-bounded) still satisfies the pair check', () => {
+    const res = signalFidelity('Entering long on mETH as the short crosses above the long.', methBuy);
+    expect(res.pass).toBe(true);
+  });
+
+  it('the canonical "mETH/USDC" pair string satisfies the pair check', () => {
+    const res = signalFidelity('Stepping into mETH/USDC long as the short crosses above.', methBuy);
+    expect(res.pass).toBe(true);
+  });
+});

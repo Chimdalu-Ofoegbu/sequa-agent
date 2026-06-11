@@ -38,10 +38,13 @@ const SELL_LEXICON =
 export function signalFidelity(thesis: string, signal: Signal): FidelityResult {
   const base = baseTokenOf(signal.pair); // e.g. "WMNT"
   const text = thesis;
-  const lower = thesis.toLowerCase();
 
-  // (1) the correct pair/base token must appear (canonical symbol match)
-  const namesBase = text.includes(base) || lower.includes(base.toLowerCase());
+  // (1) the correct pair/base token must appear, matched on a WORD BOUNDARY (not a bare substring,
+  // which would let "meth" inside "method" false-pass for an mETH signal). Either the base symbol
+  // ("mETH") or the canonical pair string ("mETH/USDC") satisfies the check. Case-insensitive so
+  // the model's casing variance does not cause a spurious mismatch.
+  const escape = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const namesBase = new RegExp(`\\b${escape(base)}\\b`, 'i').test(text);
   if (!namesBase) {
     return { pass: false, reason: `thesis does not name the pair token "${base}"` };
   }
