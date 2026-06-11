@@ -48,7 +48,7 @@ describe('decideSignals — crossover detection (D-02/D-03)', () => {
       'mETH/USDC': flatSeries(),
       'WETH/USDC': flatSeries(),
     };
-    const signals = decideSignals(series, emptyPortfolio(), DEFAULT_STRATEGY_CONFIG, AGENT_ID);
+    const signals = decideSignals(series, emptyPortfolio(), AGENT_ID, DEFAULT_STRATEGY_CONFIG);
     expect(signals).toHaveLength(1);
     expect(signals[0]!.pair).toBe('WMNT/USDC');
     expect(signals[0]!.direction).toBe('BUY');
@@ -65,7 +65,7 @@ describe('decideSignals — crossover detection (D-02/D-03)', () => {
     };
     // must be holding WMNT for the SELL to be valid (else D-15 skip)
     const portfolio: PortfolioState = { usdc: 1_000, holdings: { WMNT: 5_000 } };
-    const signals = decideSignals(series, portfolio, DEFAULT_STRATEGY_CONFIG, AGENT_ID);
+    const signals = decideSignals(series, portfolio, AGENT_ID, DEFAULT_STRATEGY_CONFIG);
     expect(signals).toHaveLength(1);
     expect(signals[0]!.pair).toBe('WMNT/USDC');
     expect(signals[0]!.direction).toBe('SELL');
@@ -80,7 +80,7 @@ describe('decideSignals — crossover detection (D-02/D-03)', () => {
       'mETH/USDC': flatSeries(),
       'WETH/USDC': flatSeries(),
     };
-    const signals = decideSignals(series, emptyPortfolio(), DEFAULT_STRATEGY_CONFIG, AGENT_ID);
+    const signals = decideSignals(series, emptyPortfolio(), AGENT_ID, DEFAULT_STRATEGY_CONFIG);
     expect(signals).toHaveLength(0);
   });
 });
@@ -93,11 +93,11 @@ describe('decideSignals — determinism (mirror fidelity, D-01)', () => {
       'WETH/USDC': flatSeries(),
     };
     const portfolio: PortfolioState = { usdc: 10_000, holdings: { mETH: 2 } };
-    const run1 = decideSignals(series, portfolio, DEFAULT_STRATEGY_CONFIG, AGENT_ID);
-    const run2 = decideSignals(series, portfolio, DEFAULT_STRATEGY_CONFIG, AGENT_ID);
+    const run1 = decideSignals(series, portfolio, AGENT_ID, DEFAULT_STRATEGY_CONFIG);
+    const run2 = decideSignals(series, portfolio, AGENT_ID, DEFAULT_STRATEGY_CONFIG);
     expect(run2).toEqual(run1);
     // and a third run to be sure it is not accidentally order-/state-dependent
-    const run3 = decideSignals(series, portfolio, DEFAULT_STRATEGY_CONFIG, AGENT_ID);
+    const run3 = decideSignals(series, portfolio, AGENT_ID, DEFAULT_STRATEGY_CONFIG);
     expect(run3).toEqual(run1);
   });
 });
@@ -111,10 +111,10 @@ describe('decideSignals — skip edge cases emit ZERO signals (D-13/D-14/D-15)',
     };
     // usdc below the configured minimum → BUY must be skipped
     const portfolio: PortfolioState = { usdc: 10, holdings: {} };
-    const signals = decideSignals(series, portfolio, DEFAULT_STRATEGY_CONFIG, AGENT_ID);
+    const signals = decideSignals(series, portfolio, AGENT_ID, DEFAULT_STRATEGY_CONFIG);
     expect(signals).toHaveLength(0);
 
-    const detailed = decideSignalsDetailed(series, portfolio, DEFAULT_STRATEGY_CONFIG, AGENT_ID);
+    const detailed = decideSignalsDetailed(series, portfolio, AGENT_ID, DEFAULT_STRATEGY_CONFIG);
     const wmnt = detailed.find((d) => d.pair === 'WMNT/USDC')!;
     expect(wmnt.kind).toBe('skip');
     expect(wmnt.reason).toBe('usdc_below_min');
@@ -128,10 +128,10 @@ describe('decideSignals — skip edge cases emit ZERO signals (D-13/D-14/D-15)',
     };
     // already holding WMNT → no doubling up
     const portfolio: PortfolioState = { usdc: 10_000, holdings: { WMNT: 1_000 } };
-    const signals = decideSignals(series, portfolio, DEFAULT_STRATEGY_CONFIG, AGENT_ID);
+    const signals = decideSignals(series, portfolio, AGENT_ID, DEFAULT_STRATEGY_CONFIG);
     expect(signals).toHaveLength(0);
 
-    const detailed = decideSignalsDetailed(series, portfolio, DEFAULT_STRATEGY_CONFIG, AGENT_ID);
+    const detailed = decideSignalsDetailed(series, portfolio, AGENT_ID, DEFAULT_STRATEGY_CONFIG);
     const wmnt = detailed.find((d) => d.pair === 'WMNT/USDC')!;
     expect(wmnt.kind).toBe('skip');
     expect(wmnt.reason).toBe('already_holding');
@@ -145,10 +145,10 @@ describe('decideSignals — skip edge cases emit ZERO signals (D-13/D-14/D-15)',
     };
     // not holding WMNT → cannot sell
     const portfolio: PortfolioState = { usdc: 10_000, holdings: {} };
-    const signals = decideSignals(series, portfolio, DEFAULT_STRATEGY_CONFIG, AGENT_ID);
+    const signals = decideSignals(series, portfolio, AGENT_ID, DEFAULT_STRATEGY_CONFIG);
     expect(signals).toHaveLength(0);
 
-    const detailed = decideSignalsDetailed(series, portfolio, DEFAULT_STRATEGY_CONFIG, AGENT_ID);
+    const detailed = decideSignalsDetailed(series, portfolio, AGENT_ID, DEFAULT_STRATEGY_CONFIG);
     const wmnt = detailed.find((d) => d.pair === 'WMNT/USDC')!;
     expect(wmnt.kind).toBe('skip');
     expect(wmnt.reason).toBe('holding_nothing');
@@ -163,7 +163,7 @@ describe('decideSignals — D-16 serial order + D-05 concurrent positions', () =
       'mETH/USDC': bullishCrossSeries(),
       'WETH/USDC': bullishCrossSeries(),
     };
-    const signals = decideSignals(series, emptyPortfolio(), DEFAULT_STRATEGY_CONFIG, AGENT_ID);
+    const signals = decideSignals(series, emptyPortfolio(), AGENT_ID, DEFAULT_STRATEGY_CONFIG);
     expect(signals.map((s) => s.pair)).toEqual(['WMNT/USDC', 'mETH/USDC', 'WETH/USDC']);
   });
 
@@ -173,7 +173,7 @@ describe('decideSignals — D-16 serial order + D-05 concurrent positions', () =
       'mETH/USDC': bullishCrossSeries(),
       'WETH/USDC': bullishCrossSeries(),
     };
-    const signals = decideSignals(series, emptyPortfolio(), DEFAULT_STRATEGY_CONFIG, AGENT_ID);
+    const signals = decideSignals(series, emptyPortfolio(), AGENT_ID, DEFAULT_STRATEGY_CONFIG);
     expect(signals.map((s) => s.pair)).toEqual(['mETH/USDC', 'WETH/USDC']);
   });
 
@@ -183,11 +183,35 @@ describe('decideSignals — D-16 serial order + D-05 concurrent positions', () =
       'mETH/USDC': bullishCrossSeries(),
       'WETH/USDC': bullishCrossSeries(),
     };
-    const signals = decideSignals(series, emptyPortfolio(), DEFAULT_STRATEGY_CONFIG, AGENT_ID);
+    const signals = decideSignals(series, emptyPortfolio(), AGENT_ID, DEFAULT_STRATEGY_CONFIG);
     expect(signals).toHaveLength(3);
     expect(signals.every((s) => s.direction === 'BUY')).toBe(true);
     // every emitted signal carries the agentId so it can key the thesis JSON (D-09)
     expect(signals.every((s) => s.agentId === AGENT_ID)).toBe(true);
+  });
+
+  it('D-07 sizing: 3 same-tick up-crosses size each BUY off the RUNNING USDC balance (no double-spend)', () => {
+    const series: Record<Pair, number[]> = {
+      'WMNT/USDC': bullishCrossSeries(),
+      'mETH/USDC': bullishCrossSeries(),
+      'WETH/USDC': bullishCrossSeries(),
+    };
+    const signals = decideSignals(series, emptyPortfolio(10_000), AGENT_ID, DEFAULT_STRATEGY_CONFIG);
+    expect(signals).toHaveLength(3);
+
+    const f = DEFAULT_STRATEGY_CONFIG.buyFraction; // 0.30
+    const buy1 = signals[0]!.sizeUsdc!;
+    const buy2 = signals[1]!.sizeUsdc!;
+    const buy3 = signals[2]!.sizeUsdc!;
+
+    // BUY1 off the full starting balance; BUY2 off (10000 − BUY1); BUY3 off the post-BUY2 balance.
+    expect(buy1).toBeCloseTo(f * 10_000, 6); // 3000
+    expect(buy2).toBeCloseTo(f * (10_000 - buy1), 6); // 0.3 * 7000 = 2100
+    expect(buy3).toBeCloseTo(f * (10_000 - buy1 - buy2), 6); // 0.3 * 4900 = 1470
+    expect([buy1, buy2, buy3]).toEqual([3000, 2100, 1470]);
+
+    // running-balance sizing means the committed total never exceeds the starting wallet (no double-spend)
+    expect(buy1 + buy2 + buy3).toBeLessThanOrEqual(10_000);
   });
 });
 
@@ -199,7 +223,7 @@ describe('decideSignals — purity (no I/O, no clock)', () => {
       'WETH/USDC': flatSeries(),
     };
     const portfolio = emptyPortfolio();
-    const signals = decideSignals(series, portfolio, DEFAULT_STRATEGY_CONFIG, AGENT_ID);
+    const signals = decideSignals(series, portfolio, AGENT_ID, DEFAULT_STRATEGY_CONFIG);
     const snapshot = JSON.parse(JSON.stringify(signals));
     // mutate caller-owned inputs
     portfolio.usdc = 0;

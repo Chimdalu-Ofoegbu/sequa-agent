@@ -248,7 +248,7 @@ async function runTick(cfg: ReturnType<typeof assertConfig>, ctx: ChainContext, 
     'WETH/USDC': bufToNumberSeries(state.buffers['WETH/USDC']),
   } as Record<Pair, readonly number[]>;
 
-  const signals = decideSignals(seriesByPair, portfolio, DEFAULT_STRATEGY_CONFIG, cfg.agentId.toString());
+  const signals = decideSignals(seriesByPair, portfolio, cfg.agentId.toString(), DEFAULT_STRATEGY_CONFIG);
 
   // (4) route each emitted signal (already in D-16 order) through the cooldown + cap gates.
   for (const signal of signals) {

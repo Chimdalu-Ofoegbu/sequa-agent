@@ -82,11 +82,18 @@ function detectCross(series: readonly number[], cfg: StrategyConfig): {
 /**
  * Evaluate ONE pair this tick and return a Decision. Applies the D-13/D-14/D-15 skip rules.
  * Does not mutate the portfolio (pure); the caller (Plan 05 runtime) applies fills.
+ *
+ * `availableUsdc` is the RUNNING USDC balance for this tick (init = portfolio.usdc, decremented
+ * by each prior same-tick BUY). Sizing the D-07 fixed-fraction BUY off this running balance — not
+ * off the starting `portfolio.usdc` — prevents ≥2 same-tick BUYs from each committing 0.30 of the
+ * full starting balance and collectively over-committing the wallet (the multi-BUY double-spend).
+ * The D-13 "USDC < min → skip" check is applied to the SAME running balance.
  */
 function decidePair(
   pair: Pair,
   series: readonly number[],
   portfolio: PortfolioState,
+  availableUsdc: number,
   cfg: StrategyConfig,
   agentId: string,
 ): Decision {
@@ -103,10 +110,11 @@ function decidePair(
   if (direction === 'BUY') {
     // D-14: already holding that token → skip, no doubling up
     if (held > 0) return { pair, kind: 'skip', reason: 'already_holding' };
-    // D-13: available USDC below the minimum → skip
-    if (portfolio.usdc < cfg.minUsdc) return { pair, kind: 'skip', reason: 'usdc_below_min' };
+    // D-13: available (RUNNING) USDC below the minimum → skip. A later same-tick BUY whose prior
+    // BUYs have already drawn the running balance under the floor skips here per D-13.
+    if (availableUsdc < cfg.minUsdc) return { pair, kind: 'skip', reason: 'usdc_below_min' };
 
-    const sizeUsdc = round6(cfg.buyFraction * portfolio.usdc); // fixed-fraction BUY (D-07)
+    const sizeUsdc = round6(cfg.buyFraction * availableUsdc); // fixed-fraction BUY off RUNNING balance (D-07)
     const signal: Signal = {
       agentId,
       pair,
@@ -146,13 +154,36 @@ function round6(n: number): number {
 export function decideSignalsDetailed(
   priceSeriesByPair: Record<Pair, readonly number[]>,
   portfolio: PortfolioState,
-  cfg: StrategyConfig = DEFAULT_STRATEGY_CONFIG,
   agentId: string,
+  cfg: StrategyConfig = DEFAULT_STRATEGY_CONFIG,
 ): Decision[] {
   // PAIRS is the fixed [WMNT, mETH, WETH] order → D-16 serial ordering by construction.
-  return PAIRS.map((pair) =>
-    decidePair(pair, priceSeriesByPair[pair] ?? [], portfolio, cfg, agentId),
-  );
+  // Thread a RUNNING USDC balance through the serial pair loop so each same-tick BUY is sized
+  // off what is actually left (not the full starting balance). SELL is a flat-sell back to USDC
+  // and does NOT consume USDC, so it never decrements the running balance for sizing purposes
+  // (the realized proceeds are applied by the runtime, not modeled in this same-tick sizing).
+  let availableUsdc = portfolio.usdc;
+  const decisions: Decision[] = [];
+  for (const pair of PAIRS) {
+    const decision = decidePair(
+      pair,
+      priceSeriesByPair[pair] ?? [],
+      portfolio,
+      availableUsdc,
+      cfg,
+      agentId,
+    );
+    // Only an emitted BUY draws down the running USDC for the next pair this tick.
+    if (
+      decision.kind === 'emit' &&
+      decision.signal?.direction === 'BUY' &&
+      decision.signal.sizeUsdc !== undefined
+    ) {
+      availableUsdc = round6(availableUsdc - decision.signal.sizeUsdc);
+    }
+    decisions.push(decision);
+  }
+  return decisions;
 }
 
 /**
@@ -165,11 +196,11 @@ export function decideSignalsDetailed(
 export function decideSignals(
   priceSeriesByPair: Record<Pair, readonly number[]>,
   portfolio: PortfolioState,
-  cfg: StrategyConfig = DEFAULT_STRATEGY_CONFIG,
   agentId: string,
+  cfg: StrategyConfig = DEFAULT_STRATEGY_CONFIG,
 ): Signal[] {
   const signals: Signal[] = [];
-  for (const decision of decideSignalsDetailed(priceSeriesByPair, portfolio, cfg, agentId)) {
+  for (const decision of decideSignalsDetailed(priceSeriesByPair, portfolio, agentId, cfg)) {
     if (decision.kind === 'emit' && decision.signal) {
       signals.push(decision.signal);
     }
