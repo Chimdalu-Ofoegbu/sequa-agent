@@ -203,4 +203,66 @@ contract SourceRegistryTest is Test {
         // The opaque bytes are still persisted for signalAt regardless of decodability.
         assertEq(registry.signalAt(AGENT_ID, 1), signal);
     }
+
+    // ----------------------------------------------------------------------------------------
+    // >=160-byte NON-conforming payload: long enough to ATTEMPT the typed decode, but the bytes
+    // do not abi.decode to (address,address,uint256,uint256,uint24) — the dirty address/uint24
+    // words make abi.decode REVERT, which the guarded `try this.decodeSignalTuple` catches.
+    // recordSignal MUST NOT revert, signalCount MUST advance, signalAt returns the raw bytes, and
+    // ONLY SignalRecorded fires (NO SignalDecoded). Complements the existing <160-byte case above.
+    // ----------------------------------------------------------------------------------------
+    function test_recordSignal_longNonConformingPayload_recordsButSkipsDecode() public {
+        vm.prank(alice);
+        registry.registerSource(AGENT_ID, "MA-trend-v1");
+
+        // Exactly 160 bytes (5 ABI words) of 0xff — passes the length gate (>=160) so the decode is
+        // ATTEMPTED, but the address words have set high bits (> 160 bits) and the uint24 word has set
+        // bits above 24, so abi.decode reverts on the dirty-bits validation → typed emit is skipped.
+        bytes memory signal = new bytes(160);
+        for (uint256 i = 0; i < 160; i++) {
+            signal[i] = 0xff;
+        }
+
+        vm.recordLogs();
+        vm.prank(alice);
+        uint256 signalId = registry.recordSignal(AGENT_ID, signal);
+
+        Vm.Log[] memory logs = vm.getRecordedLogs();
+        // EXACTLY one event — SignalRecorded only; SignalDecoded skipped because abi.decode reverted.
+        assertEq(logs.length, 1);
+        // The single log is SignalRecorded (topic0 == its event signature).
+        assertEq(logs[0].topics[0], keccak256("SignalRecorded(uint256,uint256,bytes,uint64)"));
+        assertEq(signalId, 1);
+
+        (uint256 count,) = registry.performance(AGENT_ID);
+        assertEq(count, 1); // signalCount advances despite the failed decode
+        // Raw bytes persisted verbatim regardless of decodability (D-33).
+        assertEq(registry.signalAt(AGENT_ID, 1), signal);
+    }
+
+    // ----------------------------------------------------------------------------------------
+    // POSITIVE case: a payload LONGER than 160 bytes whose FIRST 160 bytes are a valid 5-field tuple.
+    // abi.decode of a static-tuple reads only the head (160 bytes) and ignores trailing bytes, so the
+    // typed SignalDecoded MUST still fire. Guards against an over-strict length assumption.
+    // ----------------------------------------------------------------------------------------
+    function test_recordSignal_overlongValidPrefix_stillEmitsSignalDecoded() public {
+        vm.prank(alice);
+        registry.registerSource(AGENT_ID, "MA-trend-v1");
+
+        // A valid 160-byte tuple followed by 64 trailing bytes (e.g. an appended version/nonce blob).
+        bytes memory valid = _canonicalSignal();
+        bytes memory trailer = abi.encode(uint256(0xdead), uint256(0xbeef)); // 64 extra bytes
+        bytes memory signal = bytes.concat(valid, trailer);
+        assertGt(signal.length, 160);
+
+        // The typed event still fires with the prefix's decoded fields (trailing bytes ignored).
+        vm.expectEmit(true, true, true, true, address(registry));
+        emit SignalDecoded(AGENT_ID, 1, FIXTURE_TOKEN_IN, FIXTURE_TOKEN_OUT, uint256(1e18), uint256(9e17), uint24(3000));
+
+        vm.prank(alice);
+        registry.recordSignal(AGENT_ID, signal);
+
+        // And the FULL bytes (prefix + trailer) are persisted verbatim.
+        assertEq(registry.signalAt(AGENT_ID, 1), signal);
+    }
 }

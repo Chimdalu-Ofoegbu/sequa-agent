@@ -5,7 +5,12 @@ libs = ["lib"]
 # auto_detect_solc replaces the hard `solc = "0.8.24"` pin (01-SPIKE-FINDINGS §c).
 # REQUIRED so the vendored canonical Uniswap V3 contracts (solc 0.7.6) and the
 # repo's own src/ contracts (solc 0.8.x / OZ v5) compile in one project without a
-# version collision. src/ pragmas stay pinned at 0.8.24 for deterministic bytecode.
+# version collision.
+# NOTE: src/ does NOT compile at 0.8.24 — its pragma is `^0.8.20`, and auto-detect
+# resolves it to solc 0.8.28 (the version the deployed contracts are source-verified
+# at on Mantlescan). Re-verifying any src/ contract MUST pass `--compiler-version 0.8.28`
+# to byte-match the on-chain bytecode. Do NOT pin a solc here (it would break the dual
+# 0.7.6 + 0.8.x build) and do NOT touch the pragmas (that would desync deployed bytecode).
 auto_detect_solc = true
 # Silences the noisy auto-detected `openzeppelin-contracts/` remapping that would
 # otherwise clobber the dual OZ mapping below (01-SPIKE-FINDINGS §c).
