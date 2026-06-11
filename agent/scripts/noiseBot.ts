@@ -19,6 +19,7 @@
 //  build only needs it to type-check, not to run.
 // ════════════════════════════════════════════════════════════════════════════════════════════════
 
+import 'dotenv/config'; // load agent/.env (NOISE_BOT_PRIVATE_KEY) — this script doesn't import config.ts
 import {
   createPublicClient,
   createWalletClient,
