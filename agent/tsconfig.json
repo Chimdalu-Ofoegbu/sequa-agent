@@ -20,6 +20,6 @@
     "outDir": "dist",
     "rootDir": "."
   },
-  "include": ["src/**/*.ts", "test/**/*.ts", "eval/**/*.ts"],
+  "include": ["src/**/*.ts", "scripts/**/*.ts", "test/**/*.ts", "eval/**/*.ts"],
   "exclude": ["node_modules", "dist"]
 }
