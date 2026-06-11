@@ -188,6 +188,10 @@ export const quoterV2Abi = [
 /** ERC-8004 IdentityRegistry (DEC-004 / IIdentityRegistry.sol) + the ERC-721 Transfer event. */
 export const identityRegistryAbi = [
   {
+    // NOTE: the `register` return value (agentId) is INFORMATIONAL only. The source of truth for the
+    // minted agentId is the ERC-721 Transfer(0x0 -> owner, tokenId) event captured in
+    // registerIdentity.ts (Pitfall 6) — a write tx cannot return a value to an off-chain caller, so
+    // we never read this output; we always parse the Transfer log instead.
     type: 'function',
     name: 'register',
     stateMutability: 'nonpayable',
@@ -223,6 +227,45 @@ export const identityRegistryAbi = [
       { name: 'from', type: 'address', indexed: true },
       { name: 'to', type: 'address', indexed: true },
       { name: 'tokenId', type: 'uint256', indexed: true },
+    ],
+    anonymous: false,
+  },
+] as const;
+
+/**
+ * Minimal UniV3 pool surface the reconciler uses to recover settled operator swaps from a BOUNDED
+ * log scan (NOT a per-block chain walk): token0()/token1() to map the Swap amounts back to
+ * (tokenIn, tokenOut), and the canonical UniV3 `Swap` event. In a Swap, the token with the POSITIVE
+ * signed amount is the one that went INTO the pool (the swap's tokenIn); the negative side left it.
+ * `sender` and `recipient` are indexed — we filter on `recipient == operator` (the swap router sets
+ * recipient to the operator EOA for exactInputSingle).
+ */
+export const univ3PoolAbi = [
+  {
+    type: 'function',
+    name: 'token0',
+    stateMutability: 'view',
+    inputs: [],
+    outputs: [{ name: '', type: 'address' }],
+  },
+  {
+    type: 'function',
+    name: 'token1',
+    stateMutability: 'view',
+    inputs: [],
+    outputs: [{ name: '', type: 'address' }],
+  },
+  {
+    type: 'event',
+    name: 'Swap',
+    inputs: [
+      { name: 'sender', type: 'address', indexed: true },
+      { name: 'recipient', type: 'address', indexed: true },
+      { name: 'amount0', type: 'int256', indexed: false },
+      { name: 'amount1', type: 'int256', indexed: false },
+      { name: 'sqrtPriceX96', type: 'uint160', indexed: false },
+      { name: 'liquidity', type: 'uint128', indexed: false },
+      { name: 'tick', type: 'int24', indexed: false },
     ],
     anonymous: false,
   },

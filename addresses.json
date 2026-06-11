@@ -3,6 +3,7 @@
   "network": "mantle-sepolia",
   "sourceRegistry": "0x9D23f4b25442D6FBA4529a3FD1F1b3B5B9e3F090",
   "sourceRegistryDeployTx": "0x89425595559bb003db543f7c9b0cac2f00c67bfc91d1c66a8de40b1c14ecfa6a",
+  "sourceRegistryDeployBlock": 39799266,
   "sourceRegistryNote": "Phase 1 redeploy of the EXTENDED SourceRegistry (invalidateSignal, signalAt, typed SignalDecoded) — D-31. Source-verified. Supersedes the Phase 0 skeleton at 0x97a724ca8d70aee206b8d56925a735511d3cd5c8. This is the single source of truth the agent + reconciler + Phase 2 read; registerSource runs at mint time (01-06). agentId is added by registerIdentity.ts at mint.",
   "venue": {
     "factory": "0xee00d96ACE169B356E64A5dFE4ad732bE11eca93",

@@ -50,6 +50,13 @@ export interface VenueAddresses {
   nonfungiblePositionManager: Address;
 }
 
+/** The 3 self-deployed UniV3 pools (addresses.json `pools`, Plan 01 / D-43). All fee=3000. */
+export interface PoolAddresses {
+  wmntUsdc: Address;
+  methUsdc: Address;
+  wethUsdc: Address;
+}
+
 /**
  * RuntimeAddresses — the parsed, checksummed view of addresses.json the chain layer consumes.
  * `sourceRegistry` and `agentId` are OPTIONAL here: Plan 06 writes the redeployed `sourceRegistry`
@@ -60,11 +67,18 @@ export interface VenueAddresses {
 export interface RuntimeAddresses {
   chainId: number;
   venue: VenueAddresses;
+  pools: PoolAddresses;
   tokens: TokenAddresses;
   fee: number;
   decimals: { usdc: number; wmnt: number; meth: number; weth: number };
   /** Filled by Plan 06's SourceRegistry redeploy write-back. */
   sourceRegistry?: Address;
+  /**
+   * Block the SourceRegistry was deployed in (decimal). The reconciler defaults its `fromBlock` to
+   * this so it scans `[deploy, latest]` instead of from genesis — scanning from 0 would make the D-40
+   * gate time out on the public Mantle RPC (no registry events exist before this block anyway).
+   */
+  sourceRegistryDeployBlock?: number;
   /** Filled by registerIdentity.ts at ERC-8004 mint time (NOT 1 — Pitfall 6). */
   agentId?: string;
 }
@@ -80,8 +94,10 @@ export function addressesJsonPath(): string {
 export function loadAddresses(path: string = addressesJsonPath()): RuntimeAddresses {
   const raw = JSON.parse(readFileSync(path, 'utf8')) as Record<string, unknown>;
   const venue = raw.venue as Record<string, string> | undefined;
+  const pools = raw.pools as Record<string, string> | undefined;
   const tokens = raw.tokens as Record<string, string> | undefined;
   if (!venue || !tokens) throw new Error(`addresses.json missing venue/tokens (read ${path})`);
+  if (!pools) throw new Error(`addresses.json missing pools (read ${path})`);
 
   const out: RuntimeAddresses = {
     chainId: Number(raw.chainId),
@@ -90,6 +106,11 @@ export function loadAddresses(path: string = addressesJsonPath()): RuntimeAddres
       swapRouter: getAddress(venue.swapRouter!),
       quoterV2: getAddress(venue.quoterV2!),
       nonfungiblePositionManager: getAddress(venue.nonfungiblePositionManager!),
+    },
+    pools: {
+      wmntUsdc: getAddress(pools.wmntUsdc!),
+      methUsdc: getAddress(pools.methUsdc!),
+      wethUsdc: getAddress(pools.wethUsdc!),
     },
     tokens: {
       usdc: getAddress(tokens.usdc!),
@@ -102,6 +123,10 @@ export function loadAddresses(path: string = addressesJsonPath()): RuntimeAddres
   };
   if (typeof raw.sourceRegistry === 'string' && raw.sourceRegistry.length > 0) {
     out.sourceRegistry = getAddress(raw.sourceRegistry);
+  }
+  if (raw.sourceRegistryDeployBlock !== undefined && raw.sourceRegistryDeployBlock !== null) {
+    const block = Number(raw.sourceRegistryDeployBlock);
+    if (Number.isInteger(block) && block >= 0) out.sourceRegistryDeployBlock = block;
   }
   if (raw.agentId !== undefined && raw.agentId !== null) {
     out.agentId = String(raw.agentId);

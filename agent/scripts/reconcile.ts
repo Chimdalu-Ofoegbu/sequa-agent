@@ -17,16 +17,57 @@
 //    - orphan      : a NON-invalidated signal with NO matching settled swap → FAILS --assert.
 // ════════════════════════════════════════════════════════════════════════════════════════════════
 
-import { decodeEventLog, decodeFunctionData, getAbiItem, getAddress, type Address, type Hex, type PublicClient } from 'viem';
+import { decodeEventLog, getAbiItem, getAddress, type Address, type Hex, type PublicClient } from 'viem';
 import { assertConfig } from '../src/config';
-import { makePublicClient, operatorAccount } from '../src/chain/clients';
-import { sourceRegistryAbi, swapRouterAbi } from '../src/chain/abis';
+import { makePublicClient, operatorAccount, loadAddresses, type PoolAddresses } from '../src/chain/clients';
+import { sourceRegistryAbi, univ3PoolAbi } from '../src/chain/abis';
 import { decodeSignal, matchKey } from '../src/chain/reconcile-shared';
 import { isEntry } from '../src/isEntry';
 
 /** The typed SignalRecorded / SignalInvalidated event items (for getLogs `event:`). */
 const signalRecordedEvent = getAbiItem({ abi: sourceRegistryAbi, name: 'SignalRecorded' });
 const signalInvalidatedEvent = getAbiItem({ abi: sourceRegistryAbi, name: 'SignalInvalidated' });
+/** The UniV3 pool `Swap` event item (for the bounded, log-based operator-swap scan). */
+const poolSwapEvent = getAbiItem({ abi: univ3PoolAbi, name: 'Swap' });
+
+/**
+ * Default page size for every `eth_getLogs` call. The public Mantle RPC CAPS the block range per
+ * getLogs request, so we MUST page rather than ask for [deploy, latest] in one shot. 9000 < the cap
+ * with headroom; overridable via RECONCILE_BLOCK_CHUNK. NEVER scan from block 0 (the registry did not
+ * exist then) and NEVER walk per-block over the whole chain.
+ */
+export const DEFAULT_RECONCILE_BLOCK_CHUNK = 9000n;
+
+/** The configured getLogs page size (RECONCILE_BLOCK_CHUNK env override, default 9000). */
+function reconcileBlockChunk(): bigint {
+  const raw = process.env.RECONCILE_BLOCK_CHUNK;
+  if (!raw) return DEFAULT_RECONCILE_BLOCK_CHUNK;
+  const n = BigInt(raw);
+  return n > 0n ? n : DEFAULT_RECONCILE_BLOCK_CHUNK;
+}
+
+/**
+ * getLogsChunked — page `pub.getLogs(params)` across `[fromBlock, toBlock]` in windows of `chunk`
+ * blocks, concatenating the results. This is the ONLY way the reconciler reads logs: a single
+ * unbounded getLogs over the whole history exceeds the public Mantle RPC's range cap and fails the
+ * D-40 gate. `toBlock` is resolved to a concrete block number by the caller (never 'latest' here).
+ */
+export async function getLogsChunked(
+  pub: PublicClient,
+  fromBlock: bigint,
+  toBlock: bigint,
+  chunk: bigint,
+  params: Omit<Parameters<PublicClient['getLogs']>[0] & object, 'fromBlock' | 'toBlock'>,
+): Promise<Awaited<ReturnType<PublicClient['getLogs']>>> {
+  const out: Awaited<ReturnType<PublicClient['getLogs']>> = [];
+  for (let start = fromBlock; start <= toBlock; start += chunk) {
+    const end = start + chunk - 1n > toBlock ? toBlock : start + chunk - 1n;
+    // eslint-disable-next-line no-await-in-loop -- sequential paging is intentional (RPC range cap).
+    const page = await pub.getLogs({ ...params, fromBlock: start, toBlock: end } as Parameters<PublicClient['getLogs']>[0]);
+    out.push(...page);
+  }
+  return out;
+}
 
 // ---------------------------------------------------------------------------------------------
 //  PURE CLASSIFIER (unit-tested with fixture arrays — NO network, NO chain, NO API key).
@@ -42,7 +83,7 @@ export interface RecordedSignal {
   recordBlock: bigint;
 }
 
-/** A settled swap by the operator EOA (from exactInputSingle txs / pool Swap events). */
+/** A settled swap by the operator EOA (recovered from pool Swap events, recipient == operator). */
 export interface SettledSwap {
   tokenIn: Address;
   tokenOut: Address;
@@ -81,6 +122,17 @@ export interface ReconcileReport {
  *   - Otherwise, a signal with a settled swap sharing its matchKey AND a swap block >= its record
  *     block is `matched`. Each swap is consumed once (a swap matches at most one signal).
  *   - Otherwise it is an `orphan` → fails --assert.
+ *
+ * RESIDUAL LIMITATION (P2-MEDIUM, documented not over-engineered): matching is amount-based FIFO over
+ * matchKey(tokenIn, tokenOut, amountIn). Two signals with the IDENTICAL (tokenIn, tokenOut, amountIn)
+ * could in principle FALSE-MATCH — signal A could be credited with signal B's swap and vice-versa.
+ * Because each swap is consumed at most once and the block-ordering tie-break prefers the earliest
+ * unused swap at/after the record block, the COUNTS (matched / invalidated / orphan) — and therefore
+ * the D-40 orphan gate — are correct even under a false-match; only the per-signal A↔B attribution can
+ * swap. A fully robust correlation would pair each signal to its swap by tx-adjacency (the operator's
+ * swap-tx nonce == the recordSignal-tx nonce + 1 on the same EOA); that is deferred as a Phase-2
+ * hardening since it does not change the gate outcome. BUY sizing (a USDC fraction) makes identical
+ * amounts on the same pair within a window unlikely in practice; SELL flat-sells the full holding.
  */
 export function classify(
   signals: readonly RecordedSignal[],
@@ -158,14 +210,13 @@ export async function fetchRecordedSignals(
   sourceRegistry: Address,
   agentId: bigint,
   fromBlock: bigint,
-  toBlock: bigint | 'latest',
+  toBlock: bigint,
+  chunk: bigint = DEFAULT_RECONCILE_BLOCK_CHUNK,
 ): Promise<RecordedSignal[]> {
-  const logs = await pub.getLogs({
+  const logs = await getLogsChunked(pub, fromBlock, toBlock, chunk, {
     address: sourceRegistry,
     event: signalRecordedEvent,
     args: { agentId },
-    fromBlock,
-    toBlock,
   });
   const out: RecordedSignal[] = [];
   for (const log of logs) {
@@ -194,14 +245,13 @@ export async function fetchInvalidatedIds(
   sourceRegistry: Address,
   agentId: bigint,
   fromBlock: bigint,
-  toBlock: bigint | 'latest',
+  toBlock: bigint,
+  chunk: bigint = DEFAULT_RECONCILE_BLOCK_CHUNK,
 ): Promise<Set<string>> {
-  const logs = await pub.getLogs({
+  const logs = await getLogsChunked(pub, fromBlock, toBlock, chunk, {
     address: sourceRegistry,
     event: signalInvalidatedEvent,
     args: { agentId },
-    fromBlock,
-    toBlock,
   });
   const ids = new Set<string>();
   for (const log of logs) {
@@ -218,54 +268,72 @@ export async function fetchInvalidatedIds(
 }
 
 /**
- * Fetch the operator EOA's settled swaps over the block range by decoding exactInputSingle calldata
- * on its transactions to the SwapRouter. A settled swap = a successful tx FROM the operator TO the
- * SwapRouter whose input decodes to exactInputSingle (we read tokenIn/tokenOut/amountIn from params).
+ * fetchOperatorSwaps — recover the operator EOA's settled swaps from a BOUNDED, log-based scan over
+ * `[fromBlock, toBlock]` (NEVER from block 0; NEVER a per-block walk of the whole chain). For each of
+ * the 3 UniV3 pools we `getLogs` the canonical `Swap(sender, recipient, amount0, amount1, ...)` event
+ * (chunked to respect the RPC range cap), filtered to `recipient == operator` (the SwapRouter sets
+ * the swap recipient to the operator EOA for exactInputSingle). From each Swap we recover the
+ * (tokenIn, tokenOut, amountIn): we read each pool's token0()/token1() ONCE (cached), and the token
+ * whose signed amount is POSITIVE is the one that went INTO the pool — that is `tokenIn`, and the
+ * positive amount is `amountIn`. The other token (negative amount) is `tokenOut`.
+ *
+ * A Swap log existing at all means the swap settled (reverted txs emit no logs), so no per-tx receipt
+ * fetch is needed — this is the bounded-RPC path that replaces the O(chain-length) getBlock walk.
  */
 export async function fetchOperatorSwaps(
   pub: PublicClient,
-  swapRouter: Address,
+  pools: PoolAddresses,
   operator: Address,
   fromBlock: bigint,
   toBlock: bigint,
+  chunk: bigint = DEFAULT_RECONCILE_BLOCK_CHUNK,
 ): Promise<SettledSwap[]> {
   const out: SettledSwap[] = [];
-  const routerLc = swapRouter.toLowerCase();
-  const operatorLc = operator.toLowerCase();
-  // Walk blocks in the range; for each, inspect txs to the router from the operator. (Range is small
-  // on a Sepolia demo agent; for large ranges a log-based path would be used — see fetchOperatorSwaps note.)
-  for (let b = fromBlock; b <= toBlock; b++) {
-    const block = await pub.getBlock({ blockNumber: b, includeTransactions: true });
-    for (const tx of block.transactions) {
-      if (typeof tx === 'string') continue;
-      if (!tx.to || tx.to.toLowerCase() !== routerLc) continue;
-      if (tx.from.toLowerCase() !== operatorLc) continue;
-      try {
-        const { functionName, args } = decodeFunctionDataSafe(tx.input);
-        if (functionName !== 'exactInputSingle') continue;
-        const params = (args as readonly { tokenIn: Address; tokenOut: Address; amountIn: bigint }[])[0];
-        if (!params) continue;
-        // confirm the tx actually settled (receipt status === 'success').
-        const receipt = await pub.getTransactionReceipt({ hash: tx.hash });
-        if (receipt.status !== 'success') continue;
-        out.push({
-          tokenIn: getAddress(params.tokenIn),
-          tokenOut: getAddress(params.tokenOut),
-          amountIn: params.amountIn,
-          swapBlock: b,
-        });
-      } catch {
-        // not an exactInputSingle we model — skip.
+  const poolAddresses = [pools.wmntUsdc, pools.methUsdc, pools.wethUsdc];
+
+  for (const pool of poolAddresses) {
+    // token0/token1 read ONCE per pool (cached for every Swap log on it).
+    const [token0, token1] = (await Promise.all([
+      pub.readContract({ address: pool, abi: univ3PoolAbi, functionName: 'token0' }),
+      pub.readContract({ address: pool, abi: univ3PoolAbi, functionName: 'token1' }),
+    ])) as [Address, Address];
+
+    // Bounded, chunked Swap-log scan, filtered to recipient == operator (indexed topic).
+    const logs = await getLogsChunked(pub, fromBlock, toBlock, chunk, {
+      address: pool,
+      event: poolSwapEvent,
+      args: { recipient: operator },
+    });
+
+    for (const log of logs) {
+      const parsed = decodeEventLog({
+        abi: univ3PoolAbi,
+        data: log.data,
+        topics: log.topics as [Hex, ...Hex[]],
+      });
+      if (parsed.eventName !== 'Swap') continue;
+      const { amount0, amount1 } = parsed.args as { amount0: bigint; amount1: bigint };
+      // The POSITIVE signed amount went INTO the pool → that token is tokenIn, |amount| is amountIn.
+      // (UniV3 convention: positive = pool received, negative = pool paid out.)
+      let tokenIn: Address;
+      let tokenOut: Address;
+      let amountIn: bigint;
+      if (amount0 > 0n) {
+        tokenIn = getAddress(token0);
+        tokenOut = getAddress(token1);
+        amountIn = amount0;
+      } else if (amount1 > 0n) {
+        tokenIn = getAddress(token1);
+        tokenOut = getAddress(token0);
+        amountIn = amount1;
+      } else {
+        // degenerate (both zero) — not a real swap leg; skip.
+        continue;
       }
+      out.push({ tokenIn, tokenOut, amountIn, swapBlock: log.blockNumber ?? 0n });
     }
   }
   return out;
-}
-
-/** Decode exactInputSingle calldata via the router ABI; throws if it does not match. */
-function decodeFunctionDataSafe(input: Hex): { functionName: string; args: readonly unknown[] } {
-  const decoded = decodeFunctionData({ abi: swapRouterAbi, data: input });
-  return { functionName: decoded.functionName, args: decoded.args as readonly unknown[] };
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -280,14 +348,26 @@ async function main(): Promise<void> {
   const pub = makePublicClient();
   const operator = operatorAccount(cfg.operatorKey).address;
 
-  const fromBlock = BigInt(process.env.RECONCILE_FROM_BLOCK ?? '0');
+  // DEFAULT fromBlock = the SourceRegistry deploy block (NOT 0). Scanning from genesis makes the D-40
+  // gate time out on the public Mantle RPC, and no registry events exist before the deploy anyway.
+  // RECONCILE_FROM_BLOCK is an optional override (e.g. to re-scan a narrower window).
+  const addrs = loadAddresses();
+  const deployBlock = addrs.sourceRegistryDeployBlock;
+  if (deployBlock === undefined && process.env.RECONCILE_FROM_BLOCK === undefined) {
+    throw new Error(
+      'addresses.json has no `sourceRegistryDeployBlock` and RECONCILE_FROM_BLOCK is unset — refusing ' +
+        'to scan from genesis (the D-40 gate would time out on the public RPC). Add the deploy block.',
+    );
+  }
+  const fromBlock = BigInt(process.env.RECONCILE_FROM_BLOCK ?? String(deployBlock));
+  const chunk = reconcileBlockChunk();
   const latest = await pub.getBlockNumber();
 
   const [signals, invalidatedIds] = await Promise.all([
-    fetchRecordedSignals(pub, cfg.sourceRegistry, cfg.agentId, fromBlock, latest),
-    fetchInvalidatedIds(pub, cfg.sourceRegistry, cfg.agentId, fromBlock, latest),
+    fetchRecordedSignals(pub, cfg.sourceRegistry, cfg.agentId, fromBlock, latest, chunk),
+    fetchInvalidatedIds(pub, cfg.sourceRegistry, cfg.agentId, fromBlock, latest, chunk),
   ]);
-  const swaps = await fetchOperatorSwaps(pub, cfg.swapRouter, operator, fromBlock, latest);
+  const swaps = await fetchOperatorSwaps(pub, addrs.pools, operator, fromBlock, latest, chunk);
 
   const report = classify(signals, invalidatedIds, swaps);
 
