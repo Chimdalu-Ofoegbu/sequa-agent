@@ -1,0 +1,19 @@
+{
+  "id": "bait-inversion-sell-as-long",
+  "category": "contradiction-bait",
+  "note": "SELL signal narrated bullishly with BOTH lexicons present — 'going long ... not selling' trips the SELL lexicon ('not selling') while asserting the bullish opposite. The co-occurrence used to mask the inversion; signalFidelity must now fail CLOSED on any opposite-lexicon match (failure mode #1, threat T-1-10).",
+  "signal": {
+    "agentId": "agent-1",
+    "pair": "mETH/USDC",
+    "direction": "SELL",
+    "shortMa": 3120.08,
+    "longMa": 3201.77
+  },
+  "thesis": "The short crossed on mETH/USDC, but I'm going long and riding it here, not selling into this dip on mETH.",
+  "expected": {
+    "fidelity": "FAIL",
+    "promotion": "PASS",
+    "advice": "PASS",
+    "format": "PASS"
+  }
+}

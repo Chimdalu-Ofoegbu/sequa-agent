@@ -18,8 +18,13 @@ export interface FidelityResult {
 // Direction lexicons — the vocabulary each direction is allowed to read as.
 // Phrases are context-anchored to avoid false matches (e.g. the bullish idiom "breaking out"
 // must NOT register as a SELL "out"): SELL "out" only counts in an exit context.
+// "long" is context-anchored to a BULLISH use — it must FOLLOW a position/movement verb
+// ("going long", "entering long", "staying long", "i'm long", "in long"). This deliberately
+// EXCLUDES the long-MA reference ("dropped under THE long", "below the long average", "the long
+// on WETH/USDC") that appears in every SELL thesis — those follow an article, not a verb — so
+// fail-closed inversion does not flag every legitimate flat-sell.
 const BUY_LEXICON =
-  /\b(go(?:ing)? long|longing|(?:i'?m |i am )?long\b|enter(?:ing)?|stepping in|step(?:ping)? in|in with the trend|buy(?:ing)?\b|bought|added|riding the trend|riding the confirmation|pushed? above|punched? above|crossed above)\b/i;
+  /\b(longing|(?:go(?:ing)?|enter(?:ing)?|stay(?:ing)?|step(?:ping)? into|i'?m|i am|am|in)\s+long\b|enter(?:ing)?|stepping in(?:to)?|step(?:ping)? in(?:to)?|in with the trend|buy(?:ing)?\b|bought|added|riding the trend|riding the confirmation|pushed? above|punched? above|crossed above)\b/i;
 // SELL "out" is anchored to a genuine exit context ("stepping out", "i'm out", "out fast", "out
 // before the reversal") so the bullish idiom "breaking out" never registers as a SELL. Bare `out`
 // and the loose "out and" are intentionally excluded.
@@ -42,11 +47,18 @@ export function signalFidelity(thesis: string, signal: Signal): FidelityResult {
   }
 
   // (2) direction lexicon must agree with signal.direction — and must NOT assert the opposite.
+  // Fail CLOSED on inversion: if the OPPOSITE-direction lexicon matches AT ALL, FAIL regardless of
+  // any co-occurring correct-direction language. Co-occurrence was the masking bug — a SELL narrated
+  // "...going long and riding it, not selling." tripped the SELL lexicon ("not selling") and so
+  // passed the old `saysBuy && !saysSell` guard, even though it asserts the bullish opposite. The
+  // public card contradicting the chain (threat T-1-10) is the anchor failure mode, so any
+  // opposite-direction match is disqualifying.
   const saysBuy = BUY_LEXICON.test(text);
   const saysSell = SELL_LEXICON.test(text);
 
   if (signal.direction === 'BUY') {
-    if (saysSell && !saysBuy) {
+    // ANY SELL/exit language on a BUY = inversion → FAIL (even if BUY language also present).
+    if (saysSell) {
       return { pass: false, reason: 'BUY signal narrated with SELL/exit language (direction inversion)' };
     }
     if (!saysBuy) {
@@ -56,7 +68,8 @@ export function signalFidelity(thesis: string, signal: Signal): FidelityResult {
   }
 
   // signal.direction === 'SELL'
-  if (saysBuy && !saysSell) {
+  // ANY BUY/long language on a SELL = inversion → FAIL (even if SELL language also present).
+  if (saysBuy) {
     return { pass: false, reason: 'SELL signal narrated with BUY/long language (direction inversion)' };
   }
   if (!saysSell) {

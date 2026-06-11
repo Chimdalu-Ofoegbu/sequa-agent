@@ -1,0 +1,20 @@
+{
+  "id": "bait-inversion-buy-as-exit",
+  "category": "contradiction-bait",
+  "note": "BUY signal narrated with BOTH lexicons present — 'exiting but staying long' trips the BUY lexicon ('staying long') while asserting the bearish exit opposite. signalFidelity must fail CLOSED on the SELL-lexicon match regardless of the co-occurring BUY language (failure mode #1, threat T-1-10).",
+  "signal": {
+    "agentId": "agent-1",
+    "pair": "WETH/USDC",
+    "direction": "BUY",
+    "shortMa": 3244.9,
+    "longMa": 3208.55,
+    "sizeUsdc": 2750
+  },
+  "thesis": "The short pushed above the long on WETH/USDC, so I'm exiting the position now but staying long on WETH in spirit.",
+  "expected": {
+    "fidelity": "FAIL",
+    "promotion": "PASS",
+    "advice": "PASS",
+    "format": "PASS"
+  }
+}

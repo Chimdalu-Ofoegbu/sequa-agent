@@ -112,3 +112,36 @@ describe('acceptance: baits are caught by the deterministic gates', () => {
     }
   });
 });
+
+// --- fail-closed direction-inversion: opposite lexicon present masks the inversion -------------
+describe('acceptance: signalFidelity fails CLOSED when BOTH lexicons co-occur (inversion mask)', () => {
+  it('SELL narrated bullishly ("going long ... not selling") is fidelity FAIL', () => {
+    const f = fixtures.find((x) => x.id === 'bait-inversion-sell-as-long')!;
+    expect(f.signal.direction).toBe('SELL');
+    const res = signalFidelity(f.thesis, f.signal);
+    expect(res.pass).toBe(false);
+    expect(res.reason).toMatch(/inversion|BUY\/long/i);
+  });
+
+  it('BUY narrated as exit ("exiting ... staying long") is fidelity FAIL', () => {
+    const f = fixtures.find((x) => x.id === 'bait-inversion-buy-as-exit')!;
+    expect(f.signal.direction).toBe('BUY');
+    const res = signalFidelity(f.thesis, f.signal);
+    expect(res.pass).toBe(false);
+    expect(res.reason).toMatch(/inversion|SELL\/exit/i);
+  });
+
+  // direct unit cases (independent of fixtures) — the anchor masking bug
+  it('inline: SELL with co-occurring long+sell language FAILS regardless of order', () => {
+    const sell: Signal = {
+      agentId: 'agent-1',
+      pair: 'WMNT/USDC',
+      direction: 'SELL',
+      shortMa: 0.59,
+      longMa: 0.61,
+    };
+    expect(
+      signalFidelity('On WMNT/USDC I am going long and riding it, not selling.', sell).pass,
+    ).toBe(false);
+  });
+});
