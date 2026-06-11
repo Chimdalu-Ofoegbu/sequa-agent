@@ -73,6 +73,12 @@ export function startHealthServer(status: HealthStatus, port: number): Server {
     res.writeHead(404, { 'content-type': 'application/json' });
     res.end(JSON.stringify({ error: 'not_found' }));
   });
+  // A listen error (EADDRINUSE port-in-use, EACCES) must NOT crash the trading process at boot:
+  // /healthz is observability, not the hot path. Log + degrade (the agent keeps trading without it)
+  // instead of throwing an unhandled 'error' event. The pinger simply sees /healthz unreachable.
+  server.on('error', (err) => {
+    console.warn({ event: 'health_server_error', err: String(err) });
+  });
   server.listen(port, () => {
     console.log({ event: 'health_server_listening', port, path: '/healthz' });
   });
