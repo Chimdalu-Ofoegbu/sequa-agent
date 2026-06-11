@@ -21,6 +21,7 @@
 // ERC8004_IDENTITY_REGISTRY (env) or falls back to the canonical Sepolia deployment. The
 // SourceRegistry address is read at runtime from addresses.json (Plan 06 write-back, W2).
 
+import 'dotenv/config'; // load agent/.env (OPERATOR_PRIVATE_KEY, AGENT_URI, …) — this script doesn't import config.ts
 import { readFileSync, writeFileSync, existsSync, appendFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { getAddress, type Address, type Hex } from 'viem';
