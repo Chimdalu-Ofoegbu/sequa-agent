@@ -37,7 +37,7 @@
       "deployTx": "0x2dae45ce8ea5858970bd9508cfb38cdc555f2bde78675d553b525101342f8da8",
       "explorerUrl": "https://sepolia.mantlescan.xyz/address/0x3b8eA15B067eC1ff9255AbdF519e3F91bEb7c1E0",
       "verificationUrl": "https://sepolia.mantlescan.xyz/address/0x3b8eA15B067eC1ff9255AbdF519e3F91bEb7c1E0#code",
-      "verified": false
+      "verified": true
     },
     "quoterV2": {
       "address": "0x9CaC7a2a1fa687C11b5CFaEE0f967232257e87cf",
@@ -143,5 +143,6 @@
       "mirrorGasUsed": 188009,
       "totalGasUsed": 343589
     }
-  }
+  },
+  "verificationNote": "The 4 mocks share identical MockERC20 bytecode: mUSDC verifies as a clean Exact Match; mWMNT/mMETH/mWETH show Mantlescan Similar-Match + a cosmetic Constructor warning — EXPECTED + harmless, all 4 are source-verified (reviewed/accepted 2026-06-11, do not redeploy to fix). Source-verified: both registries, UniV3 Factory, SwapRouter, QuoterV2, all 4 mocks. NonfungiblePositionManager bytecode is present + functional but source-verification is pending (vendored 0.7.6 multi-file; NPM is only used for LP seeding, not the agent hot path)."
 }

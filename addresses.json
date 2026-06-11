@@ -26,6 +26,7 @@
     "weth": 18
   },
   "venueNote": "Self-deployed canonical Uniswap V3 fork (D-43). FusionX V3 is NOT on chain 5003. fee=3000 / tickSpacing 60. Deployed by script/DeployPhase1.s.sol.",
+  "mockVerificationNote": "All 4 mocks are the same MockERC20 contract, so Mantlescan source-verifies mUSDC as a clean 'Exact Match' and bytecode-matches mWMNT/mMETH/mWETH to it as 'Similar Match' + a cosmetic 'Constructor' warning. EXPECTED and harmless — all 4 are source-verified and functionally correct. Do NOT 'fix' by redeploying distinctly-named mocks; it would change token+pool addresses for zero functional gain (reviewed + accepted 2026-06-11). In the demo, point at the green source-verified checkmark, not the similarity badge.",
   "seedPrices": {
     "wmntUsdc": 0.6,
     "methUsdc": 3200,

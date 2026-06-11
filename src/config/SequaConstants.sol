@@ -68,6 +68,12 @@ library SequaConstants {
     /// @dev These are the 4 mock ERC-20s deployed by script/DeployPhase1.s.sol — the LP positions
     ///      Phase 1 created ARE these tokens. Decimals: USDC=6, WMNT/METH/WETH=18 (D-18). Written
     ///      back as deploy-time output (single source of truth), not copied from any docs.
+    /// @dev VERIFICATION NOTE: all 4 mocks are the SAME MockERC20 contract, so Mantlescan
+    ///      source-verifies mUSDC as a clean "Exact Match" and bytecode-matches mWMNT/mMETH/mWETH
+    ///      to it as "Similar Match" + a cosmetic "Constructor" warning. This is EXPECTED and
+    ///      harmless — all 4 are source-verified and functionally correct. Do NOT "fix" it by
+    ///      redeploying distinctly-named mocks; that would churn token+pool addresses for zero
+    ///      functional gain (reviewed + accepted 2026-06-11).
     address internal constant USDC_SEPOLIA = 0xAa606f127F0b40C2ab1ba47498d23C4C769C680E; // mUSDC, 6 dec
     address internal constant WMNT_SEPOLIA = 0x55dAF03C1690a8E13cB1348d9693Cd25E89F74da; // mWMNT, 18 dec
     address internal constant METH_SEPOLIA = 0xEDD7219bD5DBF25B44B891ccf25a26550277Bd3B; // mMETH, 18 dec
